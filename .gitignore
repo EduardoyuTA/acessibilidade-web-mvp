@@ -8,3 +8,9 @@ dist/
 Thumbs.db
 telas/
 design-qa.md
+coverage/
+playwright-report/
+test-results/
+*.local
+.vscode/
+.idea/
