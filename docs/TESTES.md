@@ -2,9 +2,9 @@
 
 ## Automatizados
 
-Executar `npm run check`: compila e roda os quatro testes de `tests/sites-worker.test.mjs`. Eles verificam entrega de arquivo, fallback HTML, ausência de fallback nos exemplos de API/POST testados e presença dos arquivos de empacotamento.
+Executar `npm run check`: compila, roda os quatro testes de hospedagem e executa três contratos básicos da interface. As verificações cobrem entrega de arquivos, fallback HTML, empacotamento, identidade AcessoClaro, rótulos estruturais, avisos dinâmicos e regras mínimas para telas pequenas.
 
-Não cobrem fluxo React, acessibilidade, segurança de rede ou precisão da análise. Ainda não há lint, typecheck ou testes automatizados da interface.
+Não cobrem a interação completa do React, segurança de rede, precisão da análise nem conformidade com as WCAG. Os testes automatizados não substituem verificações manuais com teclado, leitor de tela, ampliação de 200% e participantes reais.
 
 ## Roteiro manual
 

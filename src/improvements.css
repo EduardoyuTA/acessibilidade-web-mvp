@@ -1,0 +1,81 @@
+:root {
+  color-scheme: light;
+}
+
+nav button,
+.steps button,
+.filters button,
+.radios label {
+  min-height: 44px;
+}
+
+@media (max-width: 650px) {
+  header {
+    padding: 14px 18px;
+  }
+
+  .brand {
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+
+  nav {
+    align-items: stretch;
+    display: grid;
+    gap: 4px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 10px;
+  }
+
+  nav button {
+    line-height: 1.25;
+    padding: 10px 4px;
+  }
+
+  .steps {
+    overflow-x: auto;
+  }
+
+  .steps ol {
+    min-width: 360px;
+  }
+
+  .steps button {
+    min-height: 58px;
+  }
+
+  .filters button {
+    flex: 1 1 92px;
+  }
+
+  .primary,
+  .secondary {
+    width: 100%;
+  }
+
+  .print-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  fieldset {
+    padding: 18px 14px;
+  }
+
+  legend {
+    max-width: 100%;
+    padding: 0 4px;
+  }
+
+  .radios label {
+    min-height: 44px;
+  }
+
+  .evaluation {
+    align-items: flex-start;
+  }
+
+  .badge {
+    margin-top: 4px;
+  }
+}

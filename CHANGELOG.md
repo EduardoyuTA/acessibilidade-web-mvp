@@ -3,6 +3,11 @@
 ## Não lançado - identidade e fundamentação
 
 - Nome do projeto atualizado para AcessoClaro no README.
+- Nome AcessoClaro aplicado ao título do navegador e à interface.
+- Rótulos estruturais e avisos dinâmicos aprimorados para tecnologias assistivas.
+- Navegação móvel, alvos de toque e ações do relatório refinados.
+- Três testes de contrato adicionados para identidade, acessibilidade estrutural e responsividade.
+- Plano de validação criado para teclado, leitor de tela, ampliação e teste com participantes.
 - Situação pública do repositório documentada corretamente.
 - Inclusão das evidências utilizadas na apresentação de pré-banca.
 - Registro explícito das limitações da pesquisa de aceitação com 18 respostas.
