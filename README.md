@@ -2,7 +2,7 @@
 
 Protótipo acadêmico navegável do MVP. Não executa varreduras reais nem certifica acessibilidade.
 
-[Demonstração online](https://acessibilidade-web-mvp.janadaquino.chatgpt.site) · [Documentação](docs/README.md) · [Pesquisa e evidências](docs/PESQUISA.md) · [Backlog](docs/ROADMAP.md) · [Contribuir](CONTRIBUTING.md)
+[Demonstração atual](https://acessibilidade-web-mvp.janadaquino.chatgpt.site) · [Documentação](docs/README.md) · [Pesquisa e evidências](docs/PESQUISA.md) · [Backlog](docs/ROADMAP.md) · [Contribuir](CONTRIBUTING.md)
 
 Projeto de Sistemas de Informação, CEUNI FAMETRO. Autores: Eduardo Victor da Silva Costa e Tcharllyson Coelho França. Orientação: Professora Luana Leal.
 
@@ -16,6 +16,7 @@ scripts/      Preparação do pacote de hospedagem
 src/          App.tsx, app.css e main.jsx
 tests/        Testes de hospedagem
 worker/       Entrega dos arquivos estáticos
+vercel.json   Build, rotas e cabeçalhos do futuro front-end na Vercel
 ```
 
 A API de análise e o banco remoto ainda não existem. Não há pastas fictícias para componentes futuros. O código principal permanece em App.tsx; sua modularização está no backlog.
@@ -31,7 +32,7 @@ npm.cmd run dev -- --host 127.0.0.1 --port 5173
 
 Abra http://127.0.0.1:5173/. Para compilar: `npm.cmd run build`.
 
-Para compilar e rodar os testes existentes: `npm run check`. Para conferir o build local: `npm run preview -- --host 127.0.0.1`. Não é necessário `.env`, chave de API ou banco de dados para o protótipo.
+Para compilar e rodar os testes existentes: `npm run check`. Para conferir o build local: `npm run preview -- --host 127.0.0.1`. Não é necessário `.env`, chave de API ou banco de dados para o protótipo simulado. Na integração futura, `VITE_API_BASE_URL` apontará para a API do Render.
 
 ## Percurso
 
@@ -55,6 +56,6 @@ Registrar tarefa, criar branch curta, implementar, testar e abrir pull request p
 
 ## Hospedagem e segurança
 
-O GitHub armazena publicamente o código; o site é hospedado no Sites. A CI executa build e testes, mas **não publica o site**. Consulte [operação](docs/OPERACAO.md) e [segurança](SECURITY.md).
+Arquitetura de publicação escolhida para o produto: **Vercel no front-end e Render no back-end**. A demonstração anterior continua no Sites até a primeira publicação verificada na Vercel. A CI executa build e testes, mas **não publica automaticamente** em nenhuma dessas plataformas. Consulte [operação](docs/OPERACAO.md) e [segurança](SECURITY.md).
 
 PDFs pessoais, matrículas, respostas individuais e credenciais não devem ser versionados. A documentação acadêmica permanece no acervo local do TCC. A licença do código ainda deve ser definida pelos autores; nenhuma licença aberta foi atribuída automaticamente.

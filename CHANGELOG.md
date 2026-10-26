@@ -2,6 +2,9 @@
 
 ## Não lançado - identidade e fundamentação
 
+- Arquitetura de publicação definida: Vercel no front-end e Render no back-end.
+- Configuração inicial da Vercel e exemplo da URL da futura API adicionados.
+- Responsabilidades, contrato inicial e controles de segurança do backend documentados.
 - Nome do projeto atualizado para AcessoClaro no README.
 - Nome AcessoClaro aplicado ao título do navegador e à interface.
 - Rótulos estruturais e avisos dinâmicos aprimorados para tecnologias assistivas.

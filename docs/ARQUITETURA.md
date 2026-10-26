@@ -43,7 +43,20 @@ Sites / Worker: entrega dos arquivos estáticos
 
 ## Evolução proposta
 
-Interface → API → validação segura → Playwright/axe-core → resultados → relatório.
+```text
+Navegador
+  Front-end React/Vite — Vercel
+    URL, resultados, inspeção manual e relatório
+      HTTPS/JSON
+        API Node.js — Render
+          validação de URL e proteção contra SSRF
+          Playwright + axe-core
+          normalização dos achados
+```
+
+A Vercel entregará a interface estática. O Render executará a API porque a análise real exige navegador automatizado e processo de servidor. A variável `VITE_API_BASE_URL` ligará as duas partes; o CORS do backend deverá aceitar apenas os endereços oficiais do front-end.
+
+O contrato planejado começa com `GET /health` para monitoramento e `POST /api/analyze` para receber uma URL pública e devolver situação, achados e limitações. A API deve bloquear endereços privados, loopback, metadados de nuvem, protocolos diferentes de HTTP/HTTPS e redirecionamentos para destinos proibidos. Também deverá aplicar limite de tamanho, tempo de execução e quantidade de redirecionamentos.
 
 Node.js/Express e PostgreSQL constam do planejamento, mas não foram implementados. Antes de histórico remoto, definir propriedade e isolamento dos dados, pois autenticação está fora do escopo atual. Não criar uma lista global que exponha avaliações de outras pessoas.
 
