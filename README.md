@@ -1,8 +1,8 @@
-# Acessibilidade Web - MVP
+# AcessoClaro
 
 Protótipo acadêmico navegável do MVP. Não executa varreduras reais nem certifica acessibilidade.
 
-[Demonstração online](https://acessibilidade-web-mvp.janadaquino.chatgpt.site) · [Documentação](docs/README.md) · [Backlog](docs/ROADMAP.md) · [Contribuir](CONTRIBUTING.md)
+[Demonstração online](https://acessibilidade-web-mvp.janadaquino.chatgpt.site) · [Documentação](docs/README.md) · [Pesquisa e evidências](docs/PESQUISA.md) · [Backlog](docs/ROADMAP.md) · [Contribuir](CONTRIBUTING.md)
 
 Projeto de Sistemas de Informação, CEUNI FAMETRO. Autores: Eduardo Victor da Silva Costa e Tcharllyson Coelho França. Orientação: Professora Luana Leal.
 
@@ -22,7 +22,7 @@ A API de análise e o banco remoto ainda não existem. Não há pastas fictícia
 
 ## Executar
 
-Pré-requisito: Node.js 22 com npm. Clone o repositório com uma conta autorizada (ele é privado) e abra um terminal na pasta:
+Pré-requisito: Node.js 22 com npm. Clone o repositório público e abra um terminal na pasta:
 
 ```powershell
 npm.cmd ci
@@ -55,6 +55,6 @@ Registrar tarefa, criar branch curta, implementar, testar e abrir pull request p
 
 ## Hospedagem e segurança
 
-O GitHub armazena o código; o site é hospedado no Sites. A CI executa build e testes, mas **não publica o site**. Consulte [operação](docs/OPERACAO.md) e [segurança](SECURITY.md).
+O GitHub armazena publicamente o código; o site é hospedado no Sites. A CI executa build e testes, mas **não publica o site**. Consulte [operação](docs/OPERACAO.md) e [segurança](SECURITY.md).
 
 PDFs pessoais, matrículas, respostas individuais e credenciais não devem ser versionados. A documentação acadêmica permanece no acervo local do TCC. A licença do código ainda deve ser definida pelos autores; nenhuma licença aberta foi atribuída automaticamente.

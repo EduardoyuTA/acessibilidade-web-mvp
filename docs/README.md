@@ -6,6 +6,7 @@ Este projeto é um protótipo navegável com dados simulados. Não acessa págin
 
 - [Arquitetura e requisitos](ARQUITETURA.md)
 - [Plano de testes](TESTES.md)
+- [Pesquisa e evidências da proposta](PESQUISA.md)
 - [Backlog e metodologia](ROADMAP.md)
 - [Operação e publicação](OPERACAO.md)
 - [Decisão 001: protótipo e MVP](decisions/001-prototipo-e-mvp.md)

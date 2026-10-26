@@ -1,5 +1,12 @@
 # Histórico de mudanças
 
+## Não lançado - identidade e fundamentação
+
+- Nome do projeto atualizado para AcessoClaro no README.
+- Situação pública do repositório documentada corretamente.
+- Inclusão das evidências utilizadas na apresentação de pré-banca.
+- Registro explícito das limitações da pesquisa de aceitação com 18 respostas.
+
 ## Não lançado - organização do repositório
 
 - README, documentação técnica, backlog, operação e decisões.
