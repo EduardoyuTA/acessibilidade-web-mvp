@@ -12,17 +12,17 @@ Navegador
 Sites / Worker: entrega dos arquivos estáticos
 ```
 
-`src/main.jsx` importa `App.tsx` e `app.css`. A lógica está concentrada em `App.tsx`. Não há API de análise, banco remoto ou roteador com endereço próprio para cada tela. O Worker serve arquivos, não executa verificações de acessibilidade. TSX não implica typecheck: ainda falta configurar essa verificação.
+`src/main.jsx` importa `App.tsx` e `app.css`. A lógica está concentrada em `App.tsx`. Quando `VITE_API_BASE_URL` está vazio, a interface usa cenários simulados; quando configurado, envia a URL para a API. Não há banco remoto ou roteador com endereço próprio para cada tela. O Worker legado serve arquivos, não executa verificações de acessibilidade. TSX não implica typecheck: ainda falta configurar essa verificação.
 
 ## Requisitos e situação
 
 | ID | Função | Estado |
 |---|---|---|
 | RF01 | Informar URL pública | Campo implementado |
-| RF02 | Validar URL | Validação ilustrativa no cliente; segurança de rede pendente |
-| RF03 | Carregar página com navegador automatizado | Simulado |
-| RF04 | Executar análise automática | Exemplos fixos, sem axe-core |
-| RF05 | Apresentar achados detalhados | Implementado com dados fictícios |
+| RF02 | Validar URL | Cliente + bloqueio de protocolo, credenciais, portas e redes privadas na API |
+| RF03 | Carregar página com navegador automatizado | Implementado com Playwright; publicação pendente |
+| RF04 | Executar análise automática | Implementado com axe-core; publicação pendente |
+| RF05 | Apresentar achados detalhados | Dados reais quando a API está configurada; simulação como fallback explícito |
 | RF06 | Inspeção manual | Seis itens, respostas e observações |
 | RF07 | Salvar e recuperar avaliação | Histórico local |
 | RF08 | Relatório | Visualização e impressão pelo navegador |
@@ -56,8 +56,8 @@ Navegador
 
 A Vercel entregará a interface estática. O Render executará a API porque a análise real exige navegador automatizado e processo de servidor. A variável `VITE_API_BASE_URL` ligará as duas partes; o CORS do backend deverá aceitar apenas os endereços oficiais do front-end.
 
-O contrato planejado começa com `GET /health` para monitoramento e `POST /api/analyze` para receber uma URL pública e devolver situação, achados e limitações. A API deve bloquear endereços privados, loopback, metadados de nuvem, protocolos diferentes de HTTP/HTTPS e redirecionamentos para destinos proibidos. Também deverá aplicar limite de tamanho, tempo de execução e quantidade de redirecionamentos.
+O contrato implementado possui `GET /health` para monitoramento e `POST /api/analyze` para receber uma URL pública e devolver situação, achados e limitações. A API bloqueia endereços privados, loopback, metadados de nuvem, protocolos diferentes de HTTP/HTTPS, portas alternativas e requisições internas feitas durante a navegação. Aplica limites de corpo, tempo e concorrência. A proteção é uma defesa em camadas para o MVP e não substitui isolamento de rede da infraestrutura.
 
-Node.js/Express e PostgreSQL constam do planejamento, mas não foram implementados. Antes de histórico remoto, definir propriedade e isolamento dos dados, pois autenticação está fora do escopo atual. Não criar uma lista global que exponha avaliações de outras pessoas.
+Node.js/Express, Playwright e axe-core estão implementados em `backend/`. PostgreSQL permanece apenas no planejamento. Antes de histórico remoto, definir propriedade e isolamento dos dados, pois autenticação está fora do escopo atual. Não criar uma lista global que exponha avaliações de outras pessoas.
 
 Cadastro, IA, correção automática, análise em lote, dashboard avançado e certificação ficam fora desta etapa. A modularização de App.tsx deve ser realizada com testes de regressão, sem criar pastas fictícias de serviços ainda inexistentes.

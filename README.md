@@ -16,10 +16,11 @@ scripts/      Preparação do pacote de hospedagem
 src/          App.tsx, app.css e main.jsx
 tests/        Testes de hospedagem
 worker/       Entrega dos arquivos estáticos
+backend/      API Node.js, Playwright, axe-core e testes de segurança
 vercel.json   Build, rotas e cabeçalhos do futuro front-end na Vercel
 ```
 
-A API de análise e o banco remoto ainda não existem. Não há pastas fictícias para componentes futuros. O código principal permanece em App.tsx; sua modularização está no backlog.
+A primeira versão da API de análise está em `backend/`. Ela valida o destino, abre a página com Playwright e executa axe-core. O banco remoto ainda não existe; o histórico permanece no navegador. O código principal da interface permanece em App.tsx e sua modularização está no backlog.
 
 ## Executar
 
@@ -32,7 +33,7 @@ npm.cmd run dev -- --host 127.0.0.1 --port 5173
 
 Abra http://127.0.0.1:5173/. Para compilar: `npm.cmd run build`.
 
-Para compilar e rodar os testes existentes: `npm run check`. Para conferir o build local: `npm run preview -- --host 127.0.0.1`. Não é necessário `.env`, chave de API ou banco de dados para o protótipo simulado. Na integração futura, `VITE_API_BASE_URL` apontará para a API do Render.
+Para compilar e rodar os testes da interface: `npm run check`. Para testar a API: entre em `backend`, execute `npm ci` e `npm test`. Para conferir o build local: `npm run preview -- --host 127.0.0.1`. O modo simulado funciona sem `.env`; `VITE_API_BASE_URL` ativa a análise real e deve apontar para a API do Render.
 
 ## Percurso
 
@@ -48,7 +49,7 @@ Os registros ficam no armazenamento local deste navegador. Não há servidor de 
 
 Compilação aprovada; testados no navegador: campo vazio, processamento simulado, resultados com achados, preenchimento de checklist, exibição no relatório e recuperação do histórico após recarregar. Mantido um registro de teste de example.com, explicitamente identificado como teste.
 
-Pendentes: testes completos dos demais cenários, impressão em PDF, leitor de tela, auditoria de acessibilidade e refinamento visual comparativo. Consulte [plano de testes](docs/TESTES.md). Os registros acima descrevem a verificação inicial, não aprovação automática de todas as revisões futuras.
+A API foi verificada com `https://example.com`: axe-core 4.14.0 executou a análise e devolveu achados, aprovações e itens inconclusivos. Também foram aprovados testes de bloqueio de endereços privados/reservados, contrato da API e CORS. Pendentes: implantação no Render/Vercel, testes completos dos demais cenários, impressão em PDF, leitor de tela e refinamento visual comparativo. Consulte [plano de testes](docs/TESTES.md).
 
 ## Desenvolvimento em dupla
 

@@ -1,6 +1,6 @@
 # Segurança
 
-O protótipo não busca páginas externas. A validação de URL no cliente é ilustrativa, não proteção completa. Antes da análise real, implementar e testar bloqueio de redes internas/reservadas, resolução de destinos e redirecionamentos, isolamento do navegador e limites de tempo, tamanho e concorrência.
+O modo demonstrativo não busca páginas externas. A API real valida protocolo, credenciais, porta e resolução DNS; bloqueia redes internas/reservadas e intercepta os destinos requisitados pelo navegador. Há limites de corpo, tempo e concorrência. Esses controles reduzem risco de SSRF, mas a implantação também deve isolar o serviço e restringir sua rede de saída sempre que a plataforma permitir.
 
 O localStorage não é um cofre. Não inserir credenciais, URLs com tokens ou dados sensíveis em observações. Definir acesso e retenção antes de persistência remota.
 

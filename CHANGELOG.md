@@ -5,6 +5,10 @@
 - Arquitetura de publicação definida: Vercel no front-end e Render no back-end.
 - Configuração inicial da Vercel e exemplo da URL da futura API adicionados.
 - Responsabilidades, contrato inicial e controles de segurança do backend documentados.
+- API real criada com Express, Playwright e axe-core.
+- Bloqueio de URLs privadas/reservadas, CORS e limites operacionais adicionados.
+- Interface preparada para alternar automaticamente entre análise real e demonstração.
+- Teste real concluído com example.com e axe-core 4.14.0.
 - Nome do projeto atualizado para AcessoClaro no README.
 - Nome AcessoClaro aplicado ao título do navegador e à interface.
 - Rótulos estruturais e avisos dinâmicos aprimorados para tecnologias assistivas.

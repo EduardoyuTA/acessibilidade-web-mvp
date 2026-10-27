@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: acessoclaro-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: FRONTEND_ORIGIN
+        sync: false
