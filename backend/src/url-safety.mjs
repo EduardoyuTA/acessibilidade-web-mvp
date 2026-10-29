@@ -39,13 +39,24 @@ export async function validatePublicUrl(raw, lookup = dns.lookup) {
   }
 
   const hostname = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
-  if (BLOCKED_NAMES.has(hostname) || hostname.endsWith(".local")) {
+  if (
+    BLOCKED_NAMES.has(hostname) ||
+    hostname.endsWith(".local") ||
+    hostname.endsWith(".internal")
+  ) {
     throw new Error("Endereços locais ou internos não são aceitos.");
   }
 
-  const addresses = ipaddr.isValid(hostname)
-    ? [{ address: hostname }]
-    : await lookup(hostname, { all: true, verbatim: true });
+  let addresses;
+  try {
+    addresses = ipaddr.isValid(hostname)
+      ? [{ address: hostname }]
+      : await lookup(hostname, { all: true, verbatim: true });
+  } catch {
+    throw new Error(
+      "Não foi possível resolver o endereço informado. Verifique o domínio da URL."
+    );
+  }
 
   if (!addresses.length || addresses.some(({ address }) => !isPublicAddress(address))) {
     throw new Error("O endereço informado aponta para uma rede privada ou reservada.");

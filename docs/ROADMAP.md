@@ -4,11 +4,11 @@ Este é um plano em arquivo, não um quadro GitHub Projects já criado. Respons�
 
 | Prioridade | Tarefa | Critério de conclusão |
 |---|---|---|
-| P1 | Corrigir aviso de falha de armazenamento | CT09 e teste de regressão aprovados |
-| P1 | Verificar cenários e impressão | Evidências CT01-CT07 |
-| P1 | Avaliar acessibilidade da interface | Teclado, foco, contraste, zoom e leitor de tela documentados |
-| P1 | Configurar testes de interface, lint e typecheck | Comandos reproduzíveis e CI correspondente |
-| P2 | Modularizar App.tsx | Comportamento preservado e testes aprovados |
+| Concluído | Corrigir aviso de falha de armazenamento | CT09 e teste de regressão aprovados |
+| Concluído | Verificar cenários e impressão | Evidências CT01-CT07 e testes automatizados aprovados |
+| P1 | Avaliar acessibilidade da interface | Teclado, foco, contraste, zoom e axe-core verificados; leitor de tela manual pendente |
+| P1 | Configurar testes de interface, lint e typecheck | Testes de contrato e comportamento em CI; lint/typecheck dedicados pendentes |
+| Concluído | Modularizar App.tsx | Regras extraídas para `src/evaluation.mjs`, comportamento preservado e testes aprovados |
 | P2 | Especificar API e segurança | Contratos e controles revisados |
 | P2 | Implementar análise real | Achados verificáveis em páginas controladas e isolamento testado |
 | P2 | Definir persistência | Decisão sobre histórico local/remoto e proteção de dados |

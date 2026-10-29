@@ -27,30 +27,32 @@ function summarize(violation) {
 export async function analyzePage(rawUrl) {
   const target = await validatePublicUrl(rawUrl);
   const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({
-    acceptDownloads: false,
-    serviceWorkers: "block",
-    userAgent: "AcessoClaro-MVP/0.1 (avaliação acadêmica de acessibilidade)"
-  });
-  const page = await context.newPage();
-  const checkedHosts = new Map();
-
-  await page.route("**/*", async (route) => {
-    const requestUrl = route.request().url();
-    if (/^(about:|data:|blob:)/.test(requestUrl)) return route.continue();
-
-    try {
-      const candidate = new URL(requestUrl);
-      const key = `${candidate.protocol}//${candidate.host}`;
-      if (!checkedHosts.has(key)) checkedHosts.set(key, validatePublicUrl(candidate.href));
-      await checkedHosts.get(key);
-      await route.continue();
-    } catch {
-      await route.abort("blockedbyclient");
-    }
-  });
+  let context;
 
   try {
+    context = await browser.newContext({
+      acceptDownloads: false,
+      serviceWorkers: "block",
+      userAgent: "AcessoClaro-MVP/0.1 (avaliação acadêmica de acessibilidade)"
+    });
+    const page = await context.newPage();
+    const checkedHosts = new Map();
+
+    await page.route("**/*", async (route) => {
+      const requestUrl = route.request().url();
+      if (/^(about:|data:|blob:)/.test(requestUrl)) return route.continue();
+
+      try {
+        const candidate = new URL(requestUrl);
+        const key = `${candidate.protocol}//${candidate.host}`;
+        if (!checkedHosts.has(key)) checkedHosts.set(key, validatePublicUrl(candidate.href));
+        await checkedHosts.get(key);
+        await route.continue();
+      } catch {
+        await route.abort("blockedbyclient");
+      }
+    });
+
     const response = await page.goto(target.href, {
       waitUntil: "domcontentloaded",
       timeout: 20_000
@@ -72,7 +74,7 @@ export async function analyzePage(rawUrl) {
       disclaimer: "A automação cobre apenas parte dos critérios. A inspeção manual continua obrigatória."
     };
   } finally {
-    await context.close();
+    await context?.close();
     await browser.close();
   }
 }

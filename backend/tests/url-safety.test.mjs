@@ -13,19 +13,27 @@ test("bloqueia redes locais, reservadas e metadados", () => {
   }
 });
 
-test("valida protocolo, credenciais, porta e DNS", async () => {
+test("valida protocolo, credenciais, porta, domínios locais e DNS", async () => {
   const publicLookup = async () => [{ address: "93.184.216.34", family: 4 }];
   await assert.rejects(() => validatePublicUrl("file:///etc/passwd", publicLookup), /HTTP\/HTTPS/);
   await assert.rejects(() => validatePublicUrl("https://user:pass@example.com", publicLookup), /credenciais/);
   await assert.rejects(() => validatePublicUrl("https://example.com:8080", publicLookup), /portas/);
+  await assert.rejects(() => validatePublicUrl("http://localhost/teste", publicLookup), /locais ou internos/);
+  await assert.rejects(() => validatePublicUrl("http://painel.local/", publicLookup), /locais ou internos/);
+  await assert.rejects(() => validatePublicUrl("http://servico.internal/", publicLookup), /locais ou internos/);
   const result = await validatePublicUrl("https://example.com/pagina#trecho", publicLookup);
   assert.equal(result.href, "https://example.com/pagina");
 });
 
-test("bloqueia quando qualquer resolução DNS é privada", async () => {
+test("bloqueia quando qualquer resolução DNS é privada ou falha", async () => {
   const mixedLookup = async () => [
     { address: "93.184.216.34", family: 4 },
     { address: "127.0.0.1", family: 4 }
   ];
   await assert.rejects(() => validatePublicUrl("https://example.com", mixedLookup), /privada|reservada/);
+
+  const failingLookup = async () => {
+    throw new Error("getaddrinfo ENOTFOUND inexistente.example");
+  };
+  await assert.rejects(() => validatePublicUrl("https://inexistente.example", failingLookup), /resolver o endereço/);
 });

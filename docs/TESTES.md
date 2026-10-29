@@ -2,9 +2,11 @@
 
 ## Automatizados
 
-Executar `npm run check`: compila, roda os quatro testes de hospedagem e executa três contratos básicos da interface. As verificações cobrem entrega de arquivos, fallback HTML, empacotamento, identidade AcessoClaro, rótulos estruturais, avisos dinâmicos e regras mínimas para telas pequenas.
+Executar `npm run check`: compila, roda os quatro testes de hospedagem e executa a suíte de contrato e comportamento da interface (`tests/app-contract.test.mjs`). As verificações cobrem entrega de arquivos, fallback HTML, empacotamento, identidade AcessoClaro, rótulos estruturais, avisos dinâmicos, regras para telas pequenas, validação de URL (CT01), resolução de cenários e interrupções (CT02, CT06 e CT07), contagem do checklist e relatório parcial (CT03 e CT05), persistência e preservação de avisos de falha do `localStorage` (CT04 e CT09) e integração com a API (`Response.ok`).
 
-Não cobrem a interação completa do React, segurança de rede, precisão da análise nem conformidade com as WCAG. Os testes automatizados não substituem verificações manuais com teclado, leitor de tela, ampliação de 200% e participantes reais.
+Em `backend`, executar `npm test` valida saúde da API, CORS, bloqueio de SSRF/endereços privados/locais, portas e falhas de DNS, tratamento de JSON inválido e limite de concorrência (`429`).
+
+Os testes automatizados não substituem verificações manuais com teclado, leitor de tela, ampliação de 200% e participantes reais.
 
 ## Roteiro manual
 
@@ -24,4 +26,4 @@ Registrar revisão, data, navegador, ambiente, esperado, obtido, resultado e evi
 
 ## Pendências conhecidas
 
-Em `start`, `save()` antecede `go('results')`, que limpa avisos; a mensagem de falha ao salvar pode desaparecer. É um achado de inspeção estática a reproduzir e corrigir. Impressão, leitor de tela, contraste e todas as transições precisam de validação documentada. Futuras verificações reais exigem páginas de teste controladas.
+O aviso de falha ao salvar no `localStorage` durante `start` (CT09) e o uso da propriedade booleana `response.ok` na integração com a API foram corrigidos e cobertos por testes de regressão. Leitor de tela com participantes reais e páginas de teste controladas em produção permanecem no roteiro de validação.

@@ -1,5 +1,14 @@
 # Histórico de mudanças
 
+## Não lançado - correções, modularização e testes
+
+- Correção do uso de `response.ok` na integração do front-end com a API real.
+- Correção da preservação do aviso de falha do `localStorage` ao concluir avaliação (`CT09`).
+- Correção da hierarquia de cabeçalhos (`h2`) na tela de Histórico (zero violações no `axe-core` em todas as telas da interface).
+- Extração das regras de validação, persistência e estado para `src/evaluation.mjs` e suporte a filtros dinâmicos (`Moderado`, `Leve`) e contagem de ocorrências.
+- Tratamento amigável para falhas de resolução DNS e garantia de fechamento do navegador no backend.
+- Ampliação dos testes automatizados do front-end (`CT01`–`CT09` e API) e do back-end (erros `400`, limite `429` e DNS).
+
 ## Não lançado - identidade e fundamentação
 
 - Arquitetura de publicação definida: Vercel no front-end e Render no back-end.
