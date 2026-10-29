@@ -119,6 +119,7 @@ function cleanPortugueseText(text) {
     .replace(/role="none" or role="presentation"/g, 'role="none" ou role="presentation"')
     .replace(/no náximo/g, "no máximo")
     .replace(/'acesskey'/g, "'accesskey'")
+    .replace(/Certifique-se de todo o conteúdo/g, "Certifique-se de que todo o conteúdo")
     .trim();
 }
 

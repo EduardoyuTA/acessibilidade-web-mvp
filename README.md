@@ -17,10 +17,10 @@ src/          App.tsx, app.css e main.jsx
 tests/        Testes de hospedagem
 worker/       Entrega dos arquivos estáticos
 backend/      API Node.js, Playwright, axe-core e testes de segurança
-vercel.json   Build, rotas e cabeçalhos do futuro front-end na Vercel
+vercel.json   Build, rotas e cabeçalhos do front-end publicado na Vercel
 ```
 
-A primeira versão da API de análise está em `backend/`. Ela valida o destino, abre a página com Playwright e executa axe-core. O banco remoto ainda não existe; o histórico permanece no navegador. O código principal da interface permanece em App.tsx e sua modularização está no backlog.
+A API de análise publicada está em `backend/`. Ela valida o destino, abre a página com Playwright e executa axe-core. O banco remoto ainda não existe; o histórico permanece no navegador. O código principal da interface permanece em App.tsx e sua modularização está no backlog.
 
 ## Executar
 
@@ -43,11 +43,11 @@ Para compilar e rodar os testes da interface: `npm run check`. Para testar a API
 4. Consulte o relatório e use a impressão do navegador para salvar em PDF.
 5. Reabra avaliações pelo Histórico.
 
-Os registros ficam no armazenamento local deste navegador. Não há servidor de análise, conta, sincronização ou banco remoto. A validação de URL é ilustrativa e não substitui proteção de rede no backend. Não insira informações sensíveis.
+Os registros ficam no armazenamento local deste navegador. Há um servidor de análise separado, mas não há conta, sincronização ou banco remoto. A API valida a URL e bloqueia destinos locais, privados e reservados. Não insira informações sensíveis.
 
 ## Verificação realizada
 
-Compilação aprovada; testados no navegador: campo vazio, processamento simulado, resultados com achados, preenchimento de checklist, exibição no relatório e recuperação do histórico após recarregar. Mantido um registro de teste de example.com, explicitamente identificado como teste.
+Compilação aprovada; testados no navegador: campo vazio, processamento simulado, cancelamento, resultados com achados, índice automático provisório, preenchimento de checklist, exibição no relatório e recuperação do histórico após recarregar. Também foram verificadas as larguras de 375, 768 e 1.440 pixels sem rolagem horizontal, além da ordem de foco do formulário.
 
 A API foi verificada em produção (`https://acessibilidade-web-mvp.vercel.app/` integrada a `https://acessoclaro-api.onrender.com`) com `https://example.com`: `axe-core 4.14.0` executou a análise e devolveu achados reais, aprovações, itens inconclusivos e cálculo interativo de `% de acessibilidade` no relatório. Também foram aprovados os testes automatizados de contrato/comportamento (CT01–CT09), bloqueio de endereços privados/reservados, limite de concorrência (`429`) e CORS. Consulte [plano de testes](docs/TESTES.md).
 
@@ -57,6 +57,6 @@ Registrar tarefa, criar branch curta, implementar, testar e abrir pull request p
 
 ## Hospedagem e segurança
 
-Arquitetura de publicação escolhida para o produto: **Vercel no front-end e Render no back-end**. A demonstração anterior continua no Sites até a primeira publicação verificada na Vercel. A CI executa build e testes, mas **não publica automaticamente** em nenhuma dessas plataformas. Consulte [operação](docs/OPERACAO.md) e [segurança](SECURITY.md).
+Arquitetura publicada: **Vercel no front-end e Render no back-end**. As integrações com o GitHub acompanham a branch `main`; build e testes devem ser aprovados antes do envio. Consulte [operação](docs/OPERACAO.md) e [segurança](SECURITY.md).
 
 PDFs pessoais, matrículas, respostas individuais e credenciais não devem ser versionados. A documentação acadêmica permanece no acervo local do TCC. A licença do código ainda deve ser definida pelos autores; nenhuma licença aberta foi atribuída automaticamente.

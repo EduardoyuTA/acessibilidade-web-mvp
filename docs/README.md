@@ -1,6 +1,6 @@
 # Documentação técnica
 
-Este projeto possui um modo demonstrativo com dados simulados e uma primeira API de análise real, ainda não publicada. A API usa Playwright e axe-core, mas não certifica acessibilidade e precisa ser complementada por inspeção manual.
+Este projeto possui um modo demonstrativo com dados simulados e uma API de análise real publicada no Render. A API usa Playwright e axe-core, mas não certifica acessibilidade e precisa ser complementada por inspeção manual.
 
 ## Índice
 

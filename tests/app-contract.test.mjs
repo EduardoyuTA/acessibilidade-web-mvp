@@ -222,10 +222,15 @@ test("handles real API analysis responses using standard Fetch Response.ok boole
     { status: 200, headers: { "content-type": "application/json" } }
   );
 
+  const controller = new AbortController();
   const result = await requestAnalysis(
     "https://api.example.test/",
     "https://example.com/",
-    async () => okResponse
+    async (_url, init) => {
+      assert.equal(init.signal, controller.signal);
+      return okResponse;
+    },
+    { signal: controller.signal }
   );
   assert.equal(result.url, "https://example.com/");
   assert.equal(result.engine, "axe-core 4.14.0");
@@ -248,7 +253,7 @@ test("handles real API analysis responses using standard Fetch Response.ok boole
 });
 
 test("computes accessibility percentage chart metrics from automatic and manual criteria", () => {
-  // Initial findings scenario before manual checklist (auto: 56%, manual: 0%, overall: 28%)
+  // Before manual review, the provisional index reflects only the automatic analysis.
   const initial = computeAccessibilityMetrics({
     id: "m1",
     url: "https://example.com/",
@@ -259,8 +264,25 @@ test("computes accessibility percentage chart metrics from automatic and manual 
   });
   assert.equal(initial.autoScore, 56);
   assert.equal(initial.manualScore, 0);
-  assert.equal(initial.overallScore, 28);
+  assert.equal(initial.overallScore, 56);
   assert.equal(initial.manualCoverage, 0);
+  assert.equal(initial.manualScoreAvailable, false);
+  assert.equal(initial.manualComplete, false);
+  assert.equal(initial.isProvisional, true);
+
+  // A partial checklist reports coverage without lowering or inflating the provisional index.
+  const partial = computeAccessibilityMetrics({
+    id: "m-partial",
+    url: "https://example.com/",
+    date: "2026-10-29T12:00:00.000Z",
+    scenario: "findings",
+    source: "simulation",
+    answers: { 0: { value: "Atende", note: "" } }
+  });
+  assert.equal(partial.manualScore, 100);
+  assert.equal(partial.manualCoverage, 17);
+  assert.equal(partial.overallScore, 56);
+  assert.equal(partial.isProvisional, true);
 
   // Empty automatic findings + all 6 manual criteria marked 'Atende' (auto: 100%, manual: 100%, overall: 100%)
   const full = computeAccessibilityMetrics({
@@ -282,6 +304,8 @@ test("computes accessibility percentage chart metrics from automatic and manual 
   assert.equal(full.manualScore, 100);
   assert.equal(full.overallScore, 100);
   assert.equal(full.manualCoverage, 100);
+  assert.equal(full.manualComplete, true);
+  assert.equal(full.isProvisional, false);
   assert.equal(full.tone, "success");
 
   // Verify the report SVG gauge and interactive controls exist in App.tsx
@@ -303,6 +327,26 @@ test("translates English axe-core findings and Playwright errors into pt-BR", ()
   assert.match(translated.title, /região principal/i);
   assert.match(translated.evidence, /não contém uma região principal/i);
   assert.match(translated.rule, /WCAG 2\.0 Nível A/);
+
+  const translatedTwice = localizeFinding({
+    ...translated,
+    rule: `${translated.rule} · Boas práticas (Boas práticas (axe-core))`
+  });
+  assert.doesNotMatch(translatedTwice.rule, /Boas práticas \(Boas práticas/);
+
+  const allNotApplicable = computeAccessibilityMetrics({
+    id: "m-na",
+    url: "https://example.com/",
+    date: "2026-10-29T12:00:00.000Z",
+    scenario: "empty",
+    source: "simulation",
+    answers: Object.fromEntries(
+      QUESTIONS.map((_, index) => [index, { value: "Não se aplica", note: "" }])
+    )
+  });
+  assert.equal(allNotApplicable.manualComplete, true);
+  assert.equal(allNotApplicable.manualScoreAvailable, false);
+  assert.equal(allNotApplicable.overallScore, 100);
 
   const timeoutReason = localizeFailureReason(
     'page.goto: Timeout 20000ms exceeded. Call log: - navigating to "https://careiro.am.gov.br/"'

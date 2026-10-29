@@ -64,6 +64,7 @@ export function App() {
 
   const heading = useRef<HTMLHeadingElement>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const analysisController = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const initial = loadStoredRecords();
@@ -71,6 +72,7 @@ export function App() {
     if (initial.notice) setNotice(initial.notice);
     return () => {
       if (timer.current) clearInterval(timer.current);
+      analysisController.current?.abort();
     };
   }, []);
 
@@ -140,8 +142,15 @@ export function App() {
     }
 
     try {
+      const controller = new AbortController();
+      analysisController.current = controller;
       setProgress(1);
-      const payload = await requestAnalysis(API_BASE_URL, validation.href);
+      const payload = await requestAnalysis(
+        API_BASE_URL,
+        validation.href,
+        globalThis.fetch,
+        { signal: controller.signal }
+      );
       setProgress(3);
       const completed: RecordItem = {
         ...item,
@@ -153,6 +162,9 @@ export function App() {
       go("results");
       save([completed, ...records]);
     } catch (cause) {
+      if (cause instanceof DOMException && cause.name === "AbortError") {
+        return;
+      }
       const failed: RecordItem = {
         ...item,
         scenario: "error",
@@ -164,7 +176,22 @@ export function App() {
       setActive(failed);
       go("results");
       save([failed, ...records]);
+    } finally {
+      analysisController.current = null;
     }
+  }
+
+  function cancelAnalysis() {
+    if (timer.current) {
+      clearInterval(timer.current);
+      timer.current = null;
+    }
+    analysisController.current?.abort();
+    analysisController.current = null;
+    setActive(null);
+    setProgress(0);
+    go("new");
+    setNotice("Análise cancelada.");
   }
 
   function answer(index: number, value: string, note: string) {
@@ -217,7 +244,9 @@ export function App() {
       ? "Análise automática"
       : chartView === "manual"
         ? "Inspeção manual"
-        : "Índice geral";
+        : metrics.isProvisional
+          ? "Índice provisório"
+          : "Índice geral";
 
   const radius = 58;
   const circumference = 2 * Math.PI * radius;
@@ -461,6 +490,13 @@ export function App() {
                   ? "A página é processada somente para produzir esta avaliação."
                   : "Nenhuma varredura real está em execução."}
               </p>
+              <button
+                type="button"
+                className="secondary"
+                onClick={cancelAnalysis}
+              >
+                Cancelar análise
+              </button>
             </section>
           )}
 
@@ -477,12 +513,24 @@ export function App() {
               </div>
               <div className="evaluation-badges">
                 <span className={"badge " + metrics.tone}>
-                  {metrics.overallScore}% acessibilidade estimada
+                  {metrics.overallScore}%{" "}
+                  {metrics.isProvisional
+                    ? "índice automático provisório"
+                    : "acessibilidade estimada"}
                 </span>
                 <span
-                  className={"badge " + (incomplete ? "warning" : "success")}
+                  className={
+                    "badge " +
+                    (incomplete || !metrics.manualComplete
+                      ? "warning"
+                      : "success")
+                  }
                 >
-                  {incomplete ? "Incompleta" : "Concluída"}
+                  {incomplete
+                    ? "Automática incompleta"
+                    : metrics.manualComplete
+                      ? "Concluída"
+                      : "Automática concluída · manual pendente"}
                 </span>
               </div>
             </div>
@@ -614,8 +662,10 @@ export function App() {
                     consolidar o gráfico de acessibilidade no relatório.
                   </p>
                   <strong>
-                    {count} de {QUESTIONS.length} itens revisados (
-                    {metrics.manualScore}% de conformidade manual)
+                    {`${count} de ${QUESTIONS.length} ${count === 1 ? "item revisado" : "itens revisados"}`}
+                    {metrics.manualScoreAvailable
+                      ? ` (${metrics.manualScore}% de conformidade entre os itens aplicáveis revisados)`
+                      : " (conformidade ainda não calculada)"}
                   </strong>
                   <progress
                     value={count}
@@ -632,9 +682,19 @@ export function App() {
                 <section className="report-box">
                   <h2>Relatório e gráfico (%)</h2>
                   <p>
-                    Índice parcial atual: <strong>{metrics.overallScore}%</strong>{" "}
-                    (Automática: {metrics.autoScore}% · Manual:{" "}
-                    {metrics.manualScore}%).
+                    {metrics.isProvisional ? (
+                      <>
+                        Índice automático provisório:{" "}
+                        <strong>{metrics.overallScore}%</strong>. A inspeção
+                        manual está {metrics.manualCoverage}% preenchida.
+                      </>
+                    ) : (
+                      <>
+                        Índice consolidado:{" "}
+                        <strong>{metrics.overallScore}%</strong> (Automática:{" "}
+                        {metrics.autoScore}% · Manual: {metrics.manualScore}%).
+                      </>
+                    )}
                   </p>
                   <button className="secondary" onClick={() => go("report")}>
                     Visualizar relatório
@@ -658,11 +718,13 @@ export function App() {
               <div className="checklist-live-bar">
                 <div>
                   <strong>
-                    {count} de {QUESTIONS.length} itens revisados
+                    {`${count} de ${QUESTIONS.length} ${count === 1 ? "item revisado" : "itens revisados"}`}
                   </strong>
                   <small>
-                    Conformidade manual: {metrics.manualScore}% · Índice geral
-                    estimado: {metrics.overallScore}%
+                    {metrics.manualScoreAvailable
+                      ? `Conformidade entre itens aplicáveis revisados: ${metrics.manualScore}%`
+                      : "Conformidade manual ainda não calculada"}
+                    {` · ${metrics.isProvisional ? "Índice automático provisório" : "Índice geral estimado"}: ${metrics.overallScore}%`}
                   </small>
                 </div>
                 <div
@@ -742,9 +804,15 @@ export function App() {
                         <small>
                           {new Date(r.date).toLocaleString("pt-BR")} ·{" "}
                           {["timeout", "blocked", "error"].includes(r.scenario)
-                            ? "Incompleta"
-                            : "Concluída"}{" "}
-                          · {r.source === "real" ? "Real" : "Simulada"} · Índice:{" "}
+                            ? "Automática incompleta"
+                            : rowMetrics.manualComplete
+                              ? "Concluída"
+                              : "Automática concluída · manual pendente"}{" "}
+                          · {r.source === "real" ? "Real" : "Simulada"} ·{" "}
+                          {rowMetrics.isProvisional
+                            ? "Índice automático provisório"
+                            : "Índice"}
+                          :{" "}
                           <strong>{rowMetrics.overallScore}%</strong>
                         </small>
                       </div>
@@ -796,7 +864,9 @@ export function App() {
             <section className="report">
               <p className="callout">
                 {active.source === "real"
-                  ? "Relatório automatizado complementado por inspeção humana."
+                  ? metrics.manualComplete
+                    ? "Relatório automático complementado por inspeção humana."
+                    : "Relatório automático com inspeção humana ainda em andamento."
                   : "Dados simulados para demonstração acadêmica."}{" "}
                 Este relatório não representa certificação integral de
                 acessibilidade.
@@ -821,9 +891,10 @@ export function App() {
                   <div>
                     <h2>Índice de acessibilidade da avaliação</h2>
                     <p>
-                      Combinação entre a verificação automática (50%) e os
-                      critérios da inspeção manual (50%). Alterne as visões
-                      abaixo para explorar cada dimensão.
+                      {metrics.isProvisional
+                        ? "Enquanto o checklist não for concluído, o índice provisório reflete somente a análise automática."
+                        : "Índice consolidado pela verificação automática (50%) e pelos critérios da inspeção manual (50%)."}{" "}
+                      Alterne as visões abaixo para explorar cada dimensão.
                     </p>
                   </div>
                   <span className={"badge " + metrics.tone}>
@@ -837,7 +908,10 @@ export function App() {
                   aria-label="Alternar visão do gráfico de acessibilidade"
                 >
                   {[
-                    ["overall", `Índice geral (${metrics.overallScore}%)`],
+                    [
+                      "overall",
+                      `${metrics.isProvisional ? "Índice provisório" : "Índice geral"} (${metrics.overallScore}%)`
+                    ],
                     ["auto", `Análise automática (${metrics.autoScore}%)`],
                     ["manual", `Inspeção manual (${metrics.manualScore}%)`]
                   ].map(([key, label]) => (
@@ -900,8 +974,7 @@ export function App() {
                       </text>
                     </svg>
                     <small className="gauge-footnote">
-                      Cobertura manual: {metrics.manualCoverage}% (
-                      {metrics.reviewedManual}/{metrics.totalManual} itens)
+                      {`Cobertura manual: ${metrics.manualCoverage}% (${metrics.reviewedManual}/${metrics.totalManual} ${metrics.totalManual === 1 ? "item" : "itens"})`}
                     </small>
                   </div>
 
@@ -934,8 +1007,9 @@ export function App() {
                       <div className="metric-label">
                         <strong>Conformidade na inspeção manual</strong>
                         <span>
-                          {metrics.manualScore}% ({metrics.passedManual} atende
-                          · {metrics.failedManual} não atende)
+                          {metrics.manualScoreAvailable
+                            ? `${metrics.manualScore}% (${metrics.passedManual} atende · ${metrics.failedManual} não atende)`
+                            : "Ainda não calculada (nenhum item aplicável revisado)"}
                         </span>
                       </div>
                       <div
@@ -957,8 +1031,7 @@ export function App() {
                       <div className="metric-label">
                         <strong>Progresso de preenchimento do checklist</strong>
                         <span>
-                          {metrics.manualCoverage}% ({metrics.reviewedManual} de{" "}
-                          {metrics.totalManual} verificados)
+                          {`${metrics.manualCoverage}% (${metrics.reviewedManual} de ${metrics.totalManual} ${metrics.reviewedManual === 1 ? "verificado" : "verificados"})`}
                         </span>
                       </div>
                       <div
@@ -1035,7 +1108,7 @@ export function App() {
                 <div>
                   <h2>Inspeção manual</h2>
                   <p>
-                    {count} itens revisados; {pending} não verificados. Você
+                    {`${count} ${count === 1 ? "item revisado" : "itens revisados"}; ${pending} ${pending === 1 ? "não verificado" : "não verificados"}.`} Você
                     também pode atualizar o status de cada item diretamente
                     abaixo para recalcular o gráfico em tempo real.
                   </p>

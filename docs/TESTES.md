@@ -2,11 +2,11 @@
 
 ## Automatizados
 
-Executar `npm run check`: compila, roda os quatro testes de hospedagem e executa a suíte de contrato e comportamento da interface (`tests/app-contract.test.mjs`). As verificações cobrem entrega de arquivos, fallback HTML, empacotamento, identidade AcessoClaro, rótulos estruturais, avisos dinâmicos, regras para telas pequenas, validação de URL (CT01), resolução de cenários e interrupções (CT02, CT06 e CT07), contagem do checklist e relatório parcial (CT03 e CT05), cálculo do gráfico de `% de acessibilidade` (automática + inspeção manual), persistência e preservação de avisos de falha do `localStorage` (CT04 e CT09) e integração com a API (`Response.ok`).
+Executar `npm run check`: compila, roda os quatro testes de hospedagem e executa a suíte de contrato e comportamento da interface (`tests/app-contract.test.mjs`). As verificações cobrem entrega de arquivos, fallback HTML, empacotamento, identidade AcessoClaro, rótulos estruturais, avisos dinâmicos, regras para telas pequenas, validação de URL (CT01), resolução de cenários e interrupções (CT02, CT06 e CT07), contagem do checklist e relatório parcial (CT03 e CT05), índice automático provisório enquanto a inspeção manual está pendente, cálculo consolidado após o checklist, persistência e preservação de avisos de falha do `localStorage` (CT04 e CT09) e integração com a API (`Response.ok` e cancelamento por `AbortSignal`).
 
 Em `backend`, executar `npm test` valida saúde da API, CORS, bloqueio de SSRF/endereços privados/locais, portas e falhas de DNS, tratamento de JSON inválido e limite de concorrência (`429`).
 
-Os testes automatizados não substituem verificações manuais com teclado, leitor de tela, ampliação de 200% e participantes reais.
+Os testes automatizados não substituem verificações manuais com teclado, leitor de tela, ampliação de 200% e participantes reais. Em 29/10/2026, o fluxo local foi verificado em 375×667, 768×1024 e 1.440×900 pixels, sem rolagem horizontal; o cancelamento retornou à etapa inicial com aviso de estado.
 
 ## Roteiro manual
 

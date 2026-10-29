@@ -163,13 +163,15 @@ export function persistRecords(records, storage = globalThis.localStorage) {
 export async function requestAnalysis(
   apiBaseUrl,
   targetUrl,
-  fetchImpl = globalThis.fetch
+  fetchImpl = globalThis.fetch,
+  options = {}
 ) {
   const cleanBase = String(apiBaseUrl || "").replace(/\/$/, "");
   const response = await fetchImpl(`${cleanBase}/api/analyze`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ url: targetUrl })
+    body: JSON.stringify({ url: targetUrl }),
+    signal: options.signal
   });
 
   let payload = {};
@@ -399,7 +401,10 @@ export function localizeFinding(finding) {
     .replace(/role="none" or role="presentation"/g, 'role="none" ou role="presentation"')
     .replace(/no náximo/g, "no máximo")
     .trim();
-  let fix = String(finding.fix || "");
+  let fix = String(finding.fix || "").replace(
+    /Certifique-se de todo o conteúdo/g,
+    "Certifique-se de que todo o conteúdo"
+  );
 
   if (known && (!title || hasEnglishMarkers(title))) {
     title = known.title;
@@ -416,7 +421,11 @@ export function localizeFinding(finding) {
   }
 
   const rule = String(finding.rule || "")
-    .replace(/\baxe-core\b/g, "Boas práticas (axe-core)")
+    .replace(
+      /Boas práticas \(Boas práticas \(axe-core\)\)/g,
+      "Boas práticas (axe-core)"
+    )
+    .replace(/(?<!Boas práticas \()\baxe-core\b(?!\))/g, "Boas práticas (axe-core)")
     .replace(/\bwcag2a\b/g, "WCAG 2.0 Nível A")
     .replace(/\bwcag2aa\b/g, "WCAG 2.0 Nível AA")
     .replace(/\bwcag21a\b/g, "WCAG 2.1 Nível A")
@@ -517,15 +526,15 @@ export function computeAccessibilityMetrics(active) {
     else if (val === "Não se aplica") notApplicableManual += 1;
   }
 
-  const applicableTotal = Math.max(0, QUESTIONS.length - notApplicableManual);
-  const manualScore =
-    applicableTotal === 0
-      ? count > 0
-        ? 100
-        : 0
-      : Math.round((passedManual / applicableTotal) * 100);
+  const reviewedApplicable = passedManual + failedManual;
+  const manualScoreAvailable = reviewedApplicable > 0;
+  const manualScore = manualScoreAvailable
+    ? Math.round((passedManual / reviewedApplicable) * 100)
+    : 0;
 
   const manualCoverage = Math.round((count / QUESTIONS.length) * 100);
+  const manualComplete = pending === 0;
+  const isProvisional = !incomplete && !manualComplete;
 
   const severityCounts = {
     Crítico: 0,
@@ -545,13 +554,22 @@ export function computeAccessibilityMetrics(active) {
   const autoScore = incomplete ? 0 : Math.max(0, Math.min(100, 100 - penalty));
 
   const overallScore = incomplete
-    ? Math.round(manualScore * 0.5)
-    : Math.round(autoScore * 0.5 + manualScore * 0.5);
+    ? manualComplete
+      ? Math.round(manualScore * 0.5)
+      : 0
+    : manualComplete
+      ? manualScoreAvailable
+        ? Math.round(autoScore * 0.5 + manualScore * 0.5)
+        : autoScore
+      : autoScore;
 
   let level = "Requer atenção prioritária";
   let tone = "danger";
   if (incomplete) {
     level = "Avaliação automática incompleta";
+    tone = "warning";
+  } else if (isProvisional) {
+    level = "Inspeção manual pendente";
     tone = "warning";
   } else if (overallScore >= 85 && pending === 0 && failedManual === 0) {
     level = "Alto índice nos critérios avaliados";
@@ -565,7 +583,11 @@ export function computeAccessibilityMetrics(active) {
     overallScore,
     autoScore,
     manualScore,
+    manualScoreAvailable,
     manualCoverage,
+    manualComplete,
+    isProvisional,
+    reviewedApplicable,
     passedManual,
     failedManual,
     notApplicableManual,
