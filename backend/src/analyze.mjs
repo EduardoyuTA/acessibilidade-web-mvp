@@ -1,6 +1,69 @@
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import axe from "axe-core";
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import { validatePublicUrl } from "./url-safety.mjs";
+
+const require = createRequire(import.meta.url);
+const rawPtLocale = JSON.parse(
+  readFileSync(require.resolve("axe-core/locales/pt_BR.json"), "utf8")
+);
+
+const EXTRA_PT_RULES = {
+  "aria-braille-equivalent": {
+    help: "Atributos ARIA em braille devem possuir equivalente textual",
+    description:
+      "Certifique-se de que aria-braillelabel e aria-brailleroledescription tenham um nome acessível equivalente."
+  },
+  "aria-conditional-attr": {
+    help: "Atributos ARIA devem seguir as regras condicionais da função do elemento",
+    description:
+      "Certifique-se de que atributos ARIA condicionais sejam usados conforme a especificação da função do elemento."
+  },
+  "aria-deprecated-role": {
+    help: "Funções ARIA descontinuadas não devem ser utilizadas",
+    description:
+      "Certifique-se de que elementos não utilizem valores de role descontinuados."
+  },
+  "aria-prohibited-attr": {
+    help: "Elementos não devem usar atributos ARIA proibidos para sua função",
+    description:
+      "Certifique-se de que atributos ARIA proibidos para a função de um elemento não sejam utilizados."
+  },
+  "aria-tab-name": {
+    help: "Abas ARIA (role='tab') devem ter um nome acessível",
+    description:
+      "Certifique-se de que cada elemento com role='tab' possua um nome acessível."
+  },
+  "meta-refresh-no-exceptions": {
+    help: "Redirecionamento ou atualização automática via <meta http-equiv='refresh'> não deve ser usado",
+    description:
+      "Certifique-se de que a página não recarregue nem redirecione automaticamente por meta refresh."
+  },
+  "summary-name": {
+    help: "Elementos <summary> devem possuir texto discernível",
+    description:
+      "Certifique-se de que elementos <summary> tenham texto visível ou nome acessível."
+  },
+  "target-size": {
+    help: "Alvos de toque e clique devem ter tamanho e espaçamento suficientes",
+    description:
+      "Certifique-se de que controles interativos tenham dimensões mínimas adequadas (pelo menos 24x24 px) ou espaçamento suficiente."
+  }
+};
+
+const ptLocale = {
+  ...rawPtLocale,
+  rules: {
+    ...rawPtLocale.rules,
+    ...EXTRA_PT_RULES
+  },
+  incompleteFallbackMessage:
+    "Verifique manualmente se o elemento atende aos requisitos desta regra."
+};
+
+const AXE_PT_SOURCE = `${axe.source}\n;window.axe.configure({ locale: ${JSON.stringify(ptLocale)} });`;
 
 const impactNames = {
   critical: "Crítico",
@@ -47,17 +110,45 @@ async function getBrowser() {
   return sharedBrowserPromise;
 }
 
+function cleanPortugueseText(text) {
+  if (!text) return "";
+  return String(text)
+    .replace(/\{+~it:value\}[\s\S]*$/g, "")
+    .replace(/^Fix (any|all) of the following:\s*/gim, "")
+    .replace(/^Corrija (qualquer um dos|todos os) itens a seguir:\s*/gim, "")
+    .replace(/role="none" or role="presentation"/g, 'role="none" ou role="presentation"')
+    .replace(/no náximo/g, "no máximo")
+    .replace(/'acesskey'/g, "'accesskey'")
+    .trim();
+}
+
 function summarize(violation) {
   const first = violation.nodes[0];
+  const checkMessages = [
+    ...(first?.any || []),
+    ...(first?.all || []),
+    ...(first?.none || [])
+  ]
+    .map((c) => cleanPortugueseText(c?.message))
+    .filter(Boolean);
+
+  const rawSummary = cleanPortugueseText(first?.failureSummary);
+  const evidence =
+    rawSummary ||
+    checkMessages.join("; ") ||
+    cleanPortugueseText(violation.description);
+
+  const description = cleanPortugueseText(violation.description);
+
   return {
-    title: violation.help,
+    title: cleanPortugueseText(violation.help) || violation.id,
     impact: impactNames[violation.impact ?? "null"],
     rule: `${violation.id} · ${violation.tags.filter((tag) => tag.startsWith("wcag")).join(", ") || "axe-core"}`,
     element: first?.html?.slice(0, 500) || "Elemento não informado",
-    evidence:
-      first?.failureSummary?.replace(/^Fix (any|all) of the following:\s*/i, "") ||
-      violation.description,
-    fix: `Consulte a orientação da regra ${violation.id}: ${violation.helpUrl}`,
+    evidence,
+    fix: description
+      ? `${description}. Documentação da regra (${violation.id}): ${violation.helpUrl}`
+      : `Consulte a orientação da regra ${violation.id}: ${violation.helpUrl}`,
     helpUrl: violation.helpUrl,
     occurrences: violation.nodes.length
   };
@@ -73,6 +164,7 @@ export async function analyzePage(rawUrl) {
       acceptDownloads: false,
       serviceWorkers: "block",
       ignoreHTTPSErrors: true,
+      locale: "pt-BR",
       userAgent: DEFAULT_USER_AGENT,
       viewport: { width: 1280, height: 800 }
     });
@@ -107,7 +199,7 @@ export async function analyzePage(rawUrl) {
         waitUntil: "domcontentloaded",
         timeout: 28_000
       });
-    } catch (navError) {
+    } catch {
       const hasPartialDom = await page
         .evaluate(
           () => Boolean(document.body && document.body.innerHTML.trim().length > 0)
@@ -133,7 +225,10 @@ export async function analyzePage(rawUrl) {
         ? await validatePublicUrl(currentUrl)
         : target;
 
-    const results = await new AxeBuilder({ page }).analyze();
+    const results = await new AxeBuilder({
+      page,
+      axeSource: AXE_PT_SOURCE
+    }).analyze();
 
     return {
       url: finalUrl.href,

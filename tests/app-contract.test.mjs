@@ -6,6 +6,8 @@ import {
   STORAGE_KEY,
   computeAccessibilityMetrics,
   loadStoredRecords,
+  localizeFailureReason,
+  localizeFinding,
   persistRecords,
   requestAnalysis,
   resolveEvaluationState,
@@ -286,4 +288,26 @@ test("computes accessibility percentage chart metrics from automatic and manual 
   assert.match(app, /aria-label="Gráfico de porcentagem de acessibilidade"/);
   assert.match(app, /className="score-gauge"/);
 });
+
+test("translates English axe-core findings and Playwright errors into pt-BR", () => {
+  const translated = localizeFinding({
+    title: "Document should have one main landmark",
+    impact: "Moderado",
+    rule: "landmark-one-main · wcag2a",
+    element: "<html>",
+    evidence: "Document does not have a main landmark",
+    fix: "Consulte a orientação da regra landmark-one-main: https://dequeuniversity.com/rules/axe/4.14/landmark-one-main",
+    helpUrl: "https://dequeuniversity.com/rules/axe/4.14/landmark-one-main"
+  });
+
+  assert.match(translated.title, /região principal/i);
+  assert.match(translated.evidence, /não contém uma região principal/i);
+  assert.match(translated.rule, /WCAG 2\.0 Nível A/);
+
+  const timeoutReason = localizeFailureReason(
+    'page.goto: Timeout 20000ms exceeded. Call log: - navigating to "https://careiro.am.gov.br/"'
+  );
+  assert.match(timeoutReason, /Tempo limite excedido ao aguardar o carregamento/);
+});
+
 
