@@ -43,7 +43,7 @@ export function createApp({ analyze = analyzePage } = {}) {
       const result = await Promise.race([
         analyze(request.body?.url),
         new Promise((_, reject) => {
-          timeout = setTimeout(() => reject(new Error("A análise excedeu o tempo máximo.")), 35_000);
+          timeout = setTimeout(() => reject(new Error("A análise excedeu o tempo máximo.")), 50_000);
         })
       ]);
       response.json(result);
