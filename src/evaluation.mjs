@@ -235,3 +235,89 @@ export function resolveEvaluationState(active) {
     availableFilters: [...baseFilters, ...extraFilters]
   };
 }
+
+const IMPACT_WEIGHTS = {
+  Crítico: 20,
+  Sério: 12,
+  Moderado: 7,
+  Leve: 4,
+  "Não definido": 5
+};
+
+export function computeAccessibilityMetrics(active) {
+  const { incomplete, data, count, pending } = resolveEvaluationState(active);
+  const answers = active?.answers || {};
+
+  let passedManual = 0;
+  let failedManual = 0;
+  let notApplicableManual = 0;
+
+  for (let i = 0; i < QUESTIONS.length; i += 1) {
+    const val = answers[i]?.value || "Não verificado";
+    if (val === "Atende") passedManual += 1;
+    else if (val === "Não atende") failedManual += 1;
+    else if (val === "Não se aplica") notApplicableManual += 1;
+  }
+
+  const applicableTotal = Math.max(0, QUESTIONS.length - notApplicableManual);
+  const manualScore =
+    applicableTotal === 0
+      ? count > 0
+        ? 100
+        : 0
+      : Math.round((passedManual / applicableTotal) * 100);
+
+  const manualCoverage = Math.round((count / QUESTIONS.length) * 100);
+
+  const severityCounts = {
+    Crítico: 0,
+    Sério: 0,
+    Moderado: 0,
+    Leve: 0
+  };
+
+  let penalty = 0;
+  for (const finding of data) {
+    if (finding.impact in severityCounts) {
+      severityCounts[finding.impact] += 1;
+    }
+    penalty += IMPACT_WEIGHTS[finding.impact] ?? 5;
+  }
+
+  const autoScore = incomplete ? 0 : Math.max(0, Math.min(100, 100 - penalty));
+
+  const overallScore = incomplete
+    ? Math.round(manualScore * 0.5)
+    : Math.round(autoScore * 0.5 + manualScore * 0.5);
+
+  let level = "Requer atenção prioritária";
+  let tone = "danger";
+  if (incomplete) {
+    level = "Avaliação automática incompleta";
+    tone = "warning";
+  } else if (overallScore >= 85 && pending === 0 && failedManual === 0) {
+    level = "Alto índice nos critérios avaliados";
+    tone = "success";
+  } else if (overallScore >= 65) {
+    level = "Conformidade parcial nos critérios";
+    tone = "warning";
+  }
+
+  return {
+    overallScore,
+    autoScore,
+    manualScore,
+    manualCoverage,
+    passedManual,
+    failedManual,
+    notApplicableManual,
+    pendingManual: pending,
+    reviewedManual: count,
+    totalManual: QUESTIONS.length,
+    totalFindings: data.length,
+    severityCounts,
+    level,
+    tone
+  };
+}
+

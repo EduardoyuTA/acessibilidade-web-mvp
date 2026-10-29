@@ -2,6 +2,8 @@
 
 ## Não lançado - correções, modularização e testes
 
+- Adição do gráfico interativo de `% de acessibilidade` (SVG circular + barras de progresso de análise automática, conformidade manual e cobertura do checklist) na aba de Relatório.
+- Controles interativos na aba de Relatório (alternância de visão do gráfico, filtro por status e atualização rápida de itens da inspeção manual com recálculo em tempo real), no Checklist (barra de progresso ao vivo e filtro de pendentes/revisados), nos Resultados (expandir/recolher todos e copiar orientação) e no Histórico (atalho direto ao relatório com `%` e remoção de avaliação).
 - Correção do uso de `response.ok` na integração do front-end com a API real.
 - Correção da preservação do aviso de falha do `localStorage` ao concluir avaliação (`CT09`).
 - Correção da hierarquia de cabeçalhos (`h2`) na tela de Histórico (zero violações no `axe-core` em todas as telas da interface).

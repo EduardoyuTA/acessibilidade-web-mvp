@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   QUESTIONS,
   STORAGE_KEY,
+  computeAccessibilityMetrics,
   loadStoredRecords,
   persistRecords,
   requestAnalysis,
@@ -242,3 +243,46 @@ test("handles real API analysis responses using standard Fetch Response.ok boole
     /analisador está ocupado/
   );
 });
+
+test("computes accessibility percentage chart metrics from automatic and manual criteria", () => {
+  // Initial findings scenario before manual checklist (auto: 56%, manual: 0%, overall: 28%)
+  const initial = computeAccessibilityMetrics({
+    id: "m1",
+    url: "https://example.com/",
+    date: "2026-10-29T12:00:00.000Z",
+    scenario: "findings",
+    source: "simulation",
+    answers: {}
+  });
+  assert.equal(initial.autoScore, 56);
+  assert.equal(initial.manualScore, 0);
+  assert.equal(initial.overallScore, 28);
+  assert.equal(initial.manualCoverage, 0);
+
+  // Empty automatic findings + all 6 manual criteria marked 'Atende' (auto: 100%, manual: 100%, overall: 100%)
+  const full = computeAccessibilityMetrics({
+    id: "m2",
+    url: "https://example.com/",
+    date: "2026-10-29T12:00:00.000Z",
+    scenario: "empty",
+    source: "simulation",
+    answers: {
+      0: { value: "Atende", note: "" },
+      1: { value: "Atende", note: "" },
+      2: { value: "Atende", note: "" },
+      3: { value: "Atende", note: "" },
+      4: { value: "Atende", note: "" },
+      5: { value: "Não se aplica", note: "" }
+    }
+  });
+  assert.equal(full.autoScore, 100);
+  assert.equal(full.manualScore, 100);
+  assert.equal(full.overallScore, 100);
+  assert.equal(full.manualCoverage, 100);
+  assert.equal(full.tone, "success");
+
+  // Verify the report SVG gauge and interactive controls exist in App.tsx
+  assert.match(app, /aria-label="Gráfico de porcentagem de acessibilidade"/);
+  assert.match(app, /className="score-gauge"/);
+});
+

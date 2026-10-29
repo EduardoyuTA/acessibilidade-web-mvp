@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   QUESTIONS,
+  computeAccessibilityMetrics,
   loadStoredRecords,
   persistRecords,
   requestAnalysis,
@@ -53,6 +54,12 @@ export function App() {
   const [records, setRecords] = useState<RecordItem[]>([]);
   const [active, setActive] = useState<RecordItem | null>(null);
   const [filter, setFilter] = useState("Todos");
+  const [checklistFilter, setChecklistFilter] = useState("Todos");
+  const [reportManualFilter, setReportManualFilter] = useState("Todos");
+  const [chartView, setChartView] = useState<"overall" | "auto" | "manual">(
+    "overall"
+  );
+  const [expandAllFindings, setExpandAllFindings] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const heading = useRef<HTMLHeadingElement>(null);
@@ -75,6 +82,9 @@ export function App() {
   function go(nextPage: string) {
     setPage(nextPage);
     setFilter("Todos");
+    setChecklistFilter("Todos");
+    setReportManualFilter("Todos");
+    setExpandAllFindings(false);
     setError("");
     setNotice("");
   }
@@ -169,12 +179,50 @@ export function App() {
     }
   }
 
+  function removeRecord(id: string) {
+    const next = records.filter((r) => r.id !== id);
+    if (active?.id === id) setActive(null);
+    if (save(next)) {
+      setNotice("Avaliação removida do histórico deste navegador.");
+    }
+  }
+
+  async function copyFindingGuidance(f: Finding) {
+    const text = `${f.title} (${f.impact})\nRegra: ${f.rule}\nElemento: ${f.element}\nComo corrigir: ${f.fix}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setNotice(`Orientação de "${f.title}" copiada para a área de transferência.`);
+    } catch {
+      setNotice("Não foi possível copiar automaticamente neste navegador.");
+    }
+  }
+
   const { incomplete, data, count, pending, reason, availableFilters } =
     resolveEvaluationState(active);
+  const metrics = computeAccessibilityMetrics(active);
 
   const filteredData = data.filter(
     (f: Finding) => filter === "Todos" || f.impact === filter
   );
+
+  const displayedChartScore =
+    chartView === "auto"
+      ? metrics.autoScore
+      : chartView === "manual"
+        ? metrics.manualScore
+        : metrics.overallScore;
+
+  const displayedChartLabel =
+    chartView === "auto"
+      ? "Análise automática"
+      : chartView === "manual"
+        ? "Inspeção manual"
+        : "Índice geral";
+
+  const radius = 58;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset =
+    circumference - (displayedChartScore / 100) * circumference;
 
   const step =
     page === "new"
@@ -427,11 +475,16 @@ export function App() {
                     : "Dados simulados"}
                 </small>
               </div>
-              <span
-                className={"badge " + (incomplete ? "warning" : "success")}
-              >
-                {incomplete ? "Incompleta" : "Concluída"}
-              </span>
+              <div className="evaluation-badges">
+                <span className={"badge " + metrics.tone}>
+                  {metrics.overallScore}% acessibilidade estimada
+                </span>
+                <span
+                  className={"badge " + (incomplete ? "warning" : "success")}
+                >
+                  {incomplete ? "Incompleta" : "Concluída"}
+                </span>
+              </div>
             </div>
           )}
 
@@ -449,20 +502,33 @@ export function App() {
                   </div>
                 ) : (
                   <>
-                    <div
-                      className="filters"
-                      role="group"
-                      aria-label="Filtrar achados por gravidade"
-                    >
-                      {availableFilters.map((f) => (
+                    <div className="results-toolbar">
+                      <div
+                        className="filters"
+                        role="group"
+                        aria-label="Filtrar achados por gravidade"
+                      >
+                        {availableFilters.map((f) => (
+                          <button
+                            key={f}
+                            aria-pressed={filter === f}
+                            onClick={() => setFilter(f)}
+                          >
+                            {f}
+                          </button>
+                        ))}
+                      </div>
+                      {filteredData.length > 1 && (
                         <button
-                          key={f}
-                          aria-pressed={filter === f}
-                          onClick={() => setFilter(f)}
+                          type="button"
+                          className="secondary compact-btn"
+                          onClick={() => setExpandAllFindings((prev) => !prev)}
                         >
-                          {f}
+                          {expandAllFindings
+                            ? "Recolher detalhes"
+                            : "Expandir todos"}
                         </button>
-                      ))}
+                      )}
                     </div>
                     <h2>Achados automáticos ({data.length})</h2>
                     <p>
@@ -473,7 +539,7 @@ export function App() {
                     {filteredData.map((f: Finding, i: number) => (
                       <details
                         key={`${f.rule}-${i}`}
-                        open={i === 0}
+                        open={expandAllFindings || i === 0}
                         className="finding"
                       >
                         <summary>
@@ -516,6 +582,15 @@ export function App() {
                               : "Automática (simulada)"}
                           </dd>
                         </dl>
+                        <div className="finding-actions">
+                          <button
+                            type="button"
+                            className="secondary compact-btn"
+                            onClick={() => copyFindingGuidance(f)}
+                          >
+                            Copiar orientação
+                          </button>
+                        </div>
                       </details>
                     ))}
                     {!filteredData.length && (
@@ -534,9 +609,13 @@ export function App() {
               <aside>
                 <section className="guidance">
                   <h2>Inspeção manual</h2>
-                  <p>Revise aspectos que dependem de interpretação humana.</p>
+                  <p>
+                    Complete os {QUESTIONS.length} critérios humanos para
+                    consolidar o gráfico de acessibilidade no relatório.
+                  </p>
                   <strong>
-                    {count} de {QUESTIONS.length} itens revisados
+                    {count} de {QUESTIONS.length} itens revisados (
+                    {metrics.manualScore}% de conformidade manual)
                   </strong>
                   <progress
                     value={count}
@@ -551,8 +630,12 @@ export function App() {
                   </button>
                 </section>
                 <section className="report-box">
-                  <h2>Relatório simplificado</h2>
-                  <p>Reúna achados e observações, incluindo itens pendentes.</p>
+                  <h2>Relatório e gráfico (%)</h2>
+                  <p>
+                    Índice parcial atual: <strong>{metrics.overallScore}%</strong>{" "}
+                    (Automática: {metrics.autoScore}% · Manual:{" "}
+                    {metrics.manualScore}%).
+                  </p>
                   <button className="secondary" onClick={() => go("report")}>
                     Visualizar relatório
                   </button>
@@ -569,52 +652,77 @@ export function App() {
             <section>
               <p className="lead">
                 Revise cada item na página original e registre o que observou.
-                As respostas são salvas neste navegador.
+                As respostas atualizam em tempo real o índice de acessibilidade
+                e são salvas neste navegador.
               </p>
-              <strong>
-                {count} de {QUESTIONS.length} itens revisados
-              </strong>
-              {QUESTIONS.map((q, i) => (
-                <fieldset key={q}>
-                  <legend>
-                    {i + 1}. {q}
-                  </legend>
-                  <div className="radios">
-                    {[
-                      "Atende",
-                      "Não atende",
-                      "Não se aplica",
-                      "Não verificado"
-                    ].map((v) => (
-                      <label key={v}>
-                        <input
-                          type="radio"
-                          name={"q" + i}
-                          checked={
-                            (active.answers[i]?.value || "Não verificado") === v
-                          }
-                          onChange={() =>
-                            answer(i, v, active.answers[i]?.note || "")
-                          }
-                        />
-                        {v}
-                      </label>
-                    ))}
-                  </div>
-                  <label htmlFor={"note" + i}>Observação ou evidência</label>
-                  <textarea
-                    id={"note" + i}
-                    value={active.answers[i]?.note || ""}
-                    onChange={(e) =>
-                      answer(
-                        i,
-                        active.answers[i]?.value || "Não verificado",
-                        e.target.value
-                      )
-                    }
-                  />
-                </fieldset>
-              ))}
+              <div className="checklist-live-bar">
+                <div>
+                  <strong>
+                    {count} de {QUESTIONS.length} itens revisados
+                  </strong>
+                  <small>
+                    Conformidade manual: {metrics.manualScore}% · Índice geral
+                    estimado: {metrics.overallScore}%
+                  </small>
+                </div>
+                <div
+                  className="filters"
+                  role="group"
+                  aria-label="Filtrar itens do checklist"
+                >
+                  {["Todos", "Pendentes", "Revisados"].map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      aria-pressed={checklistFilter === mode}
+                      onClick={() => setChecklistFilter(mode)}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {QUESTIONS.map((q, i) => {
+                const currentVal = active.answers[i]?.value || "Não verificado";
+                const isPending = currentVal === "Não verificado";
+                if (checklistFilter === "Pendentes" && !isPending) return null;
+                if (checklistFilter === "Revisados" && isPending) return null;
+                return (
+                  <fieldset key={q}>
+                    <legend>
+                      {i + 1}. {q}
+                    </legend>
+                    <div className="radios">
+                      {[
+                        "Atende",
+                        "Não atende",
+                        "Não se aplica",
+                        "Não verificado"
+                      ].map((v) => (
+                        <label key={v}>
+                          <input
+                            type="radio"
+                            name={"q" + i}
+                            checked={currentVal === v}
+                            onChange={() =>
+                              answer(i, v, active.answers[i]?.note || "")
+                            }
+                          />
+                          {v}
+                        </label>
+                      ))}
+                    </div>
+                    <label htmlFor={"note" + i}>Observação ou evidência</label>
+                    <textarea
+                      id={"note" + i}
+                      value={active.answers[i]?.note || ""}
+                      onChange={(e) =>
+                        answer(i, currentVal, e.target.value)
+                      }
+                    />
+                  </fieldset>
+                );
+              })}
               <button className="primary" onClick={() => go("report")}>
                 Revisar relatório
               </button>
@@ -625,29 +733,51 @@ export function App() {
             <section>
               <p className="lead">Avaliações salvas somente neste navegador.</p>
               {records.length ? (
-                records.map((r) => (
-                  <article className="history-row" key={r.id}>
-                    <div>
-                      <h2>{r.url}</h2>
-                      <small>
-                        {new Date(r.date).toLocaleString("pt-BR")} ·{" "}
-                        {["timeout", "blocked", "error"].includes(r.scenario)
-                          ? "Incompleta"
-                          : "Concluída"}{" "}
-                        · {r.source === "real" ? "Real" : "Simulada"}
-                      </small>
-                    </div>
-                    <button
-                      className="secondary"
-                      onClick={() => {
-                        setActive(r);
-                        go("results");
-                      }}
-                    >
-                      Abrir avaliação
-                    </button>
-                  </article>
-                ))
+                records.map((r) => {
+                  const rowMetrics = computeAccessibilityMetrics(r);
+                  return (
+                    <article className="history-row" key={r.id}>
+                      <div>
+                        <h2>{r.url}</h2>
+                        <small>
+                          {new Date(r.date).toLocaleString("pt-BR")} ·{" "}
+                          {["timeout", "blocked", "error"].includes(r.scenario)
+                            ? "Incompleta"
+                            : "Concluída"}{" "}
+                          · {r.source === "real" ? "Real" : "Simulada"} · Índice:{" "}
+                          <strong>{rowMetrics.overallScore}%</strong>
+                        </small>
+                      </div>
+                      <div className="history-actions">
+                        <button
+                          className="secondary"
+                          onClick={() => {
+                            setActive(r);
+                            go("results");
+                          }}
+                        >
+                          Abrir avaliação
+                        </button>
+                        <button
+                          className="secondary"
+                          onClick={() => {
+                            setActive(r);
+                            go("report");
+                          }}
+                        >
+                          Ver relatório ({rowMetrics.overallScore}%)
+                        </button>
+                        <button
+                          className="secondary danger-btn"
+                          aria-label={`Remover avaliação de ${r.url}`}
+                          onClick={() => removeRecord(r.id)}
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })
               ) : (
                 <div className="empty">
                   <h2>Seu histórico começa aqui</h2>
@@ -682,6 +812,188 @@ export function App() {
                   Editar inspeção manual
                 </button>
               </div>
+
+              <section
+                className="score-dashboard"
+                aria-label="Gráfico de porcentagem de acessibilidade"
+              >
+                <div className="score-header">
+                  <div>
+                    <h2>Índice de acessibilidade da avaliação</h2>
+                    <p>
+                      Combinação entre a verificação automática (50%) e os
+                      critérios da inspeção manual (50%). Alterne as visões
+                      abaixo para explorar cada dimensão.
+                    </p>
+                  </div>
+                  <span className={"badge " + metrics.tone}>
+                    {metrics.level}
+                  </span>
+                </div>
+
+                <div
+                  className="filters chart-tabs"
+                  role="group"
+                  aria-label="Alternar visão do gráfico de acessibilidade"
+                >
+                  {[
+                    ["overall", `Índice geral (${metrics.overallScore}%)`],
+                    ["auto", `Análise automática (${metrics.autoScore}%)`],
+                    ["manual", `Inspeção manual (${metrics.manualScore}%)`]
+                  ].map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      aria-pressed={chartView === key}
+                      onClick={() =>
+                        setChartView(key as "overall" | "auto" | "manual")
+                      }
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="score-grid">
+                  <div className="gauge-card">
+                    <svg
+                      className="score-gauge"
+                      viewBox="0 0 160 160"
+                      role="img"
+                      aria-label={`Gráfico circular: ${displayedChartLabel} em ${displayedChartScore}% de acessibilidade`}
+                    >
+                      <circle
+                        className="gauge-track"
+                        cx="80"
+                        cy="80"
+                        r={radius}
+                        fill="none"
+                        strokeWidth="14"
+                      />
+                      <circle
+                        className={"gauge-fill " + metrics.tone}
+                        cx="80"
+                        cy="80"
+                        r={radius}
+                        fill="none"
+                        strokeWidth="14"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={dashOffset}
+                        strokeLinecap="round"
+                        transform="rotate(-90 80 80)"
+                      />
+                      <text
+                        x="80"
+                        y="76"
+                        textAnchor="middle"
+                        className="gauge-value"
+                      >
+                        {displayedChartScore}%
+                      </text>
+                      <text
+                        x="80"
+                        y="100"
+                        textAnchor="middle"
+                        className="gauge-caption"
+                      >
+                        {displayedChartLabel}
+                      </text>
+                    </svg>
+                    <small className="gauge-footnote">
+                      Cobertura manual: {metrics.manualCoverage}% (
+                      {metrics.reviewedManual}/{metrics.totalManual} itens)
+                    </small>
+                  </div>
+
+                  <div className="score-bars">
+                    <div className="metric-row">
+                      <div className="metric-label">
+                        <strong>Saúde da análise automática</strong>
+                        <span>
+                          {incomplete
+                            ? "Incompleta (0%)"
+                            : `${metrics.autoScore}% (${metrics.totalFindings} achado(s))`}
+                        </span>
+                      </div>
+                      <div
+                        className="bar-track"
+                        role="progressbar"
+                        aria-valuenow={metrics.autoScore}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label="Porcentagem da análise automática"
+                      >
+                        <div
+                          className="bar-fill auto"
+                          style={{ width: `${metrics.autoScore}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="metric-row">
+                      <div className="metric-label">
+                        <strong>Conformidade na inspeção manual</strong>
+                        <span>
+                          {metrics.manualScore}% ({metrics.passedManual} atende
+                          · {metrics.failedManual} não atende)
+                        </span>
+                      </div>
+                      <div
+                        className="bar-track"
+                        role="progressbar"
+                        aria-valuenow={metrics.manualScore}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label="Porcentagem de conformidade na inspeção manual"
+                      >
+                        <div
+                          className="bar-fill manual"
+                          style={{ width: `${metrics.manualScore}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="metric-row">
+                      <div className="metric-label">
+                        <strong>Progresso de preenchimento do checklist</strong>
+                        <span>
+                          {metrics.manualCoverage}% ({metrics.reviewedManual} de{" "}
+                          {metrics.totalManual} verificados)
+                        </span>
+                      </div>
+                      <div
+                        className="bar-track"
+                        role="progressbar"
+                        aria-valuenow={metrics.manualCoverage}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label="Progresso de preenchimento do checklist"
+                      >
+                        <div
+                          className="bar-fill coverage"
+                          style={{ width: `${metrics.manualCoverage}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="distribution-pills">
+                      <span className="badge success">
+                        Atende: {metrics.passedManual}
+                      </span>
+                      <span className="badge danger">
+                        Não atende: {metrics.failedManual}
+                      </span>
+                      <span className="badge neutral">
+                        Não se aplica: {metrics.notApplicableManual}
+                      </span>
+                      <span className="badge warning">
+                        Pendentes: {metrics.pendingManual}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
               {incomplete && (
                 <p className="error">Motivo da interrupção: {reason}</p>
               )}
@@ -719,19 +1031,94 @@ export function App() {
                     : "Nenhum achado automático foi identificado; revisão humana necessária."}
                 </p>
               )}
-              <h2>Inspeção manual</h2>
-              <p>
-                {count} itens revisados; {pending} não verificados.
-              </p>
-              {QUESTIONS.map((q, i) => (
-                <article key={q}>
-                  <h3>{q}</h3>
-                  <p>{active.answers[i]?.value || "Não verificado"}</p>
-                  {active.answers[i]?.note && (
-                    <p>Observação: {active.answers[i].note}</p>
+              <div className="report-manual-header">
+                <div>
+                  <h2>Inspeção manual</h2>
+                  <p>
+                    {count} itens revisados; {pending} não verificados. Você
+                    também pode atualizar o status de cada item diretamente
+                    abaixo para recalcular o gráfico em tempo real.
+                  </p>
+                </div>
+                <div
+                  className="filters no-print"
+                  role="group"
+                  aria-label="Filtrar itens da inspeção manual no relatório"
+                >
+                  {["Todos", "Atende", "Não atende", "Não verificado"].map(
+                    (statusFilter) => (
+                      <button
+                        key={statusFilter}
+                        type="button"
+                        aria-pressed={reportManualFilter === statusFilter}
+                        onClick={() => setReportManualFilter(statusFilter)}
+                      >
+                        {statusFilter}
+                      </button>
+                    )
                   )}
-                </article>
-              ))}
+                </div>
+              </div>
+              {QUESTIONS.map((q, i) => {
+                const currentStatus =
+                  active.answers[i]?.value || "Não verificado";
+                const hiddenOnScreen =
+                  reportManualFilter !== "Todos" &&
+                  currentStatus !== reportManualFilter;
+                return (
+                  <article
+                    key={q}
+                    className={hiddenOnScreen ? "screen-hidden" : ""}
+                  >
+                    <div className="report-question-row">
+                      <h3>
+                        {i + 1}. {q}
+                      </h3>
+                      <span
+                        className={
+                          "badge " +
+                          (currentStatus === "Atende"
+                            ? "success"
+                            : currentStatus === "Não atende"
+                              ? "danger"
+                              : currentStatus === "Não se aplica"
+                                ? "neutral"
+                                : "warning")
+                        }
+                      >
+                        {currentStatus}
+                      </span>
+                    </div>
+                    {active.answers[i]?.note && (
+                      <p>Observação: {active.answers[i].note}</p>
+                    )}
+                    <div
+                      className="quick-status no-print"
+                      role="group"
+                      aria-label={`Atualizar resposta para: ${q}`}
+                    >
+                      {[
+                        "Atende",
+                        "Não atende",
+                        "Não se aplica",
+                        "Não verificado"
+                      ].map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          className="quick-pill"
+                          aria-pressed={currentStatus === option}
+                          onClick={() =>
+                            answer(i, option, active.answers[i]?.note || "")
+                          }
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </article>
+                );
+              })}
               <h2>Limitações</h2>
               <p>
                 {active.source === "real"
@@ -756,6 +1143,10 @@ export function App() {
                 [
                   "O que é um achado?",
                   "Um problema identificado na avaliação, acompanhado de impacto, regra, evidência e orientação de correção. O modo da avaliação aparece junto da data."
+                ],
+                [
+                  "Como funciona o gráfico de % de acessibilidade?",
+                  "No Relatório, o gráfico combina 50% da pontuação automática (calculada conforme a quantidade e gravidade dos achados) e 50% da inspeção manual (proporção de critérios aplicáveis marcados como Atende). É um indicador orientativo da avaliação, não uma certificação."
                 ],
                 [
                   "Como usar o teclado?",

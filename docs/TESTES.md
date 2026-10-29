@@ -2,7 +2,7 @@
 
 ## Automatizados
 
-Executar `npm run check`: compila, roda os quatro testes de hospedagem e executa a suíte de contrato e comportamento da interface (`tests/app-contract.test.mjs`). As verificações cobrem entrega de arquivos, fallback HTML, empacotamento, identidade AcessoClaro, rótulos estruturais, avisos dinâmicos, regras para telas pequenas, validação de URL (CT01), resolução de cenários e interrupções (CT02, CT06 e CT07), contagem do checklist e relatório parcial (CT03 e CT05), persistência e preservação de avisos de falha do `localStorage` (CT04 e CT09) e integração com a API (`Response.ok`).
+Executar `npm run check`: compila, roda os quatro testes de hospedagem e executa a suíte de contrato e comportamento da interface (`tests/app-contract.test.mjs`). As verificações cobrem entrega de arquivos, fallback HTML, empacotamento, identidade AcessoClaro, rótulos estruturais, avisos dinâmicos, regras para telas pequenas, validação de URL (CT01), resolução de cenários e interrupções (CT02, CT06 e CT07), contagem do checklist e relatório parcial (CT03 e CT05), cálculo do gráfico de `% de acessibilidade` (automática + inspeção manual), persistência e preservação de avisos de falha do `localStorage` (CT04 e CT09) e integração com a API (`Response.ok`).
 
 Em `backend`, executar `npm test` valida saúde da API, CORS, bloqueio de SSRF/endereços privados/locais, portas e falhas de DNS, tratamento de JSON inválido e limite de concorrência (`429`).
 
