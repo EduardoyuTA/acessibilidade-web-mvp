@@ -26,7 +26,10 @@ function summarize(violation) {
 
 export async function analyzePage(rawUrl) {
   const target = await validatePublicUrl(rawUrl);
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    args: ["--disable-dev-shm-usage", "--no-sandbox", "--disable-setuid-sandbox"]
+  });
   let context;
 
   try {

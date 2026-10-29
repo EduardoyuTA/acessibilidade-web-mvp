@@ -4,9 +4,12 @@ import { analyzePage } from "./analyze.mjs";
 
 export function createApp({ analyze = analyzePage } = {}) {
   const app = express();
-  const allowedOrigins = (process.env.FRONTEND_ORIGIN || "http://localhost:5173")
+  const allowedOrigins = (
+    process.env.FRONTEND_ORIGIN ||
+    "http://localhost:5173,http://127.0.0.1:5173"
+  )
     .split(",")
-    .map((value) => value.trim())
+    .map((value) => value.trim().replace(/\/+$/, ""))
     .filter(Boolean);
   let activeAnalyses = 0;
 
@@ -14,7 +17,10 @@ export function createApp({ analyze = analyzePage } = {}) {
   app.set("trust proxy", 1);
   app.use(cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      const normalized = origin ? origin.trim().replace(/\/+$/, "") : "";
+      if (!normalized || allowedOrigins.includes(normalized)) {
+        return callback(null, true);
+      }
       callback(new Error("Origem não permitida."));
     },
     methods: ["GET", "POST"],
