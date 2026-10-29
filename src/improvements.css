@@ -2,6 +2,20 @@
   color-scheme: light;
 }
 
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand::before {
+  content: "";
+  width: 28px;
+  height: 28px;
+  background: url("/favicon.svg") center / contain no-repeat;
+  flex-shrink: 0;
+}
+
 .badge.neutral {
   background: #e2efff;
   color: #0759c9;
@@ -249,7 +263,7 @@ nav button,
   }
 
   .brand {
-    display: inline-block;
+    display: inline-flex;
     margin-bottom: 4px;
   }
 

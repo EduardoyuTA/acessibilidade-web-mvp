@@ -18,6 +18,7 @@ const css = await readFile(new URL("../src/improvements.css", import.meta.url), 
 
 test("uses the AcessoClaro identity in the document and interface", () => {
   assert.match(html, /<title>AcessoClaro \| MVP de acessibilidade web<\/title>/);
+  assert.match(html, /<link rel="icon" type="image\/svg\+xml" href="\/favicon\.svg"\s*\/>/);
   assert.match(app, />AcessoClaro<\/a>/);
   assert.doesNotMatch(app, />Acessibilidade Web<\/a>/);
 });
