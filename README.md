@@ -1,8 +1,8 @@
 # AcessoClaro
 
-Protótipo acadêmico navegável do MVP. Não executa varreduras reais nem certifica acessibilidade.
+MVP acadêmico de avaliação de acessibilidade web combinando análise automática (`Playwright` + `axe-core`) e inspeção humana guiada, com gráfico interativo de índice de acessibilidade (`%`). Não substitui auditoria especializada nem certifica acessibilidade integral.
 
-[Demonstração atual](https://acessibilidade-web-mvp.janadaquino.chatgpt.site) · [Documentação](docs/README.md) · [Pesquisa e evidências](docs/PESQUISA.md) · [Backlog](docs/ROADMAP.md) · [Contribuir](CONTRIBUTING.md)
+[Aplicação publicada (Vercel)](https://acessibilidade-web-mvp.vercel.app/) · [API de análise (Render)](https://acessoclaro-api.onrender.com/health) · [Protótipo anterior](https://acessibilidade-web-mvp.janadaquino.chatgpt.site) · [Documentação](docs/README.md) · [Pesquisa e evidências](docs/PESQUISA.md) · [Backlog](docs/ROADMAP.md) · [Contribuir](CONTRIBUTING.md)
 
 Projeto de Sistemas de Informação, CEUNI FAMETRO. Autores: Eduardo Victor da Silva Costa e Tcharllyson Coelho França. Orientação: Professora Luana Leal.
 
@@ -49,7 +49,7 @@ Os registros ficam no armazenamento local deste navegador. Não há servidor de 
 
 Compilação aprovada; testados no navegador: campo vazio, processamento simulado, resultados com achados, preenchimento de checklist, exibição no relatório e recuperação do histórico após recarregar. Mantido um registro de teste de example.com, explicitamente identificado como teste.
 
-A API foi verificada com `https://example.com`: axe-core 4.14.0 executou a análise e devolveu achados, aprovações e itens inconclusivos. Também foram aprovados testes de bloqueio de endereços privados/reservados, contrato da API e CORS. Pendentes: implantação no Render/Vercel, testes completos dos demais cenários, impressão em PDF, leitor de tela e refinamento visual comparativo. Consulte [plano de testes](docs/TESTES.md).
+A API foi verificada em produção (`https://acessibilidade-web-mvp.vercel.app/` integrada a `https://acessoclaro-api.onrender.com`) com `https://example.com`: `axe-core 4.14.0` executou a análise e devolveu achados reais, aprovações, itens inconclusivos e cálculo interativo de `% de acessibilidade` no relatório. Também foram aprovados os testes automatizados de contrato/comportamento (CT01–CT09), bloqueio de endereços privados/reservados, limite de concorrência (`429`) e CORS. Consulte [plano de testes](docs/TESTES.md).
 
 ## Desenvolvimento em dupla
 

@@ -20,12 +20,12 @@ Sites / Worker: entrega dos arquivos estáticos
 |---|---|---|
 | RF01 | Informar URL pública | Campo implementado |
 | RF02 | Validar URL | Cliente + bloqueio de protocolo, credenciais, portas e redes privadas na API |
-| RF03 | Carregar página com navegador automatizado | Implementado com Playwright; publicação pendente |
-| RF04 | Executar análise automática | Implementado com axe-core; publicação pendente |
-| RF05 | Apresentar achados detalhados | Dados reais quando a API está configurada; simulação como fallback explícito |
-| RF06 | Inspeção manual | Seis itens, respostas e observações |
-| RF07 | Salvar e recuperar avaliação | Histórico local |
-| RF08 | Relatório | Visualização e impressão pelo navegador |
+| RF03 | Carregar página com navegador automatizado | Implementado com Playwright e publicado no Render |
+| RF04 | Executar análise automática | Implementado com axe-core e publicado no Render |
+| RF05 | Apresentar achados detalhados | Dados reais em produção (Vercel + Render); simulação como fallback local |
+| RF06 | Inspeção manual | Seis itens, respostas, filtros e observações |
+| RF07 | Salvar e recuperar avaliação | Histórico local com índice (%) e exclusão |
+| RF08 | Relatório | Gráfico interativo de % de acessibilidade, visualização e impressão em PDF |
 
 ## Dados
 
