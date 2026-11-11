@@ -38,7 +38,18 @@ export async function validatePublicUrl(raw, lookup = dns.lookup) {
     throw new Error("Apenas as portas públicas padrão 80 e 443 são aceitas.");
   }
 
-  const hostname = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
+  await resolvePublicHost(url.hostname, lookup);
+
+  url.hash = "";
+  return url;
+}
+
+/**
+ * Resolve o nome do host e devolve um IP público para conectar.
+ * Falha se o nome for local ou se qualquer resolução apontar para rede privada.
+ */
+export async function resolvePublicHost(rawHostname, lookup = dns.lookup) {
+  const hostname = String(rawHostname).replace(/^\[|\]$/g, "").toLowerCase();
   if (
     BLOCKED_NAMES.has(hostname) ||
     hostname.endsWith(".local") ||
@@ -62,6 +73,5 @@ export async function validatePublicUrl(raw, lookup = dns.lookup) {
     throw new Error("O endereço informado aponta para uma rede privada ou reservada.");
   }
 
-  url.hash = "";
-  return url;
+  return addresses[0].address;
 }

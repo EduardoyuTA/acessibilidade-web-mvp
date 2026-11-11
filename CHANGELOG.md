@@ -8,6 +8,7 @@
 - Correção da preservação do aviso de falha do `localStorage` ao concluir avaliação (`CT09`).
 - Correção da hierarquia de cabeçalhos (`h2`) na tela de Histórico (zero violações no `axe-core` em todas as telas da interface).
 - Extração das regras de validação, persistência e estado para `src/evaluation.mjs` e suporte a filtros dinâmicos (`Moderado`, `Leve`) e contagem de ocorrências.
+- Segurança da API (SSRF): o `page.route` do Playwright não intercepta os saltos de redirecionamento, o que permitia a um site público redirecionar o analisador para redes internas ou metadados da nuvem. Todo o tráfego do navegador agora passa por um proxy de saída (`egress-proxy.mjs`) que valida e fixa o IP de cada conexão, cobrindo redirecionamentos, `fetch` da página e DNS rebinding. Páginas com certificado HTTPS inválido deixam de ser abertas (`ignoreHTTPSErrors` removido). Testes com navegador real em `npm run test:browser`.
 - Tratamento amigável para falhas de resolução DNS e garantia de fechamento do navegador no backend.
 - Ampliação dos testes automatizados do front-end (`CT01`–`CT09` e API) e do back-end (erros `400`, limite `429` e DNS).
 

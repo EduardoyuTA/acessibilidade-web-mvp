@@ -4,6 +4,8 @@ import axe from "axe-core";
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import { validatePublicUrl } from "./url-safety.mjs";
+import { createRequestGuard } from "./request-guard.mjs";
+import { startEgressProxy } from "./egress-proxy.mjs";
 
 const require = createRequire(import.meta.url);
 const rawPtLocale = JSON.parse(
@@ -73,19 +75,11 @@ const impactNames = {
   null: "Não definido"
 };
 
-const SKIPPED_RESOURCE_TYPES = new Set([
-  "image",
-  "media",
-  "font",
-  "websocket",
-  "manifest",
-  "other"
-]);
-
 const DEFAULT_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 AcessoClaro-MVP/0.1";
 
 let sharedBrowserPromise = null;
+let egressProxyPromise = null;
 
 async function getBrowser() {
   if (sharedBrowserPromise) {
@@ -97,15 +91,22 @@ async function getBrowser() {
     }
   }
 
-  sharedBrowserPromise = chromium.launch({
-    headless: true,
-    args: [
-      "--disable-dev-shm-usage",
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-gpu"
-    ]
-  });
+  sharedBrowserPromise = (async () => {
+    egressProxyPromise ??= startEgressProxy();
+    const proxy = await egressProxyPromise;
+    return chromium.launch({
+      headless: true,
+      // Todo o tráfego do navegador passa pelo proxy que valida cada destino.
+      proxy: { server: proxy.server },
+      args: [
+        "--disable-dev-shm-usage",
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-gpu",
+        "--force-webrtc-ip-handling-policy=disable_non_proxied_udp"
+      ]
+    });
+  })();
 
   return sharedBrowserPromise;
 }
@@ -164,35 +165,12 @@ export async function analyzePage(rawUrl) {
     context = await browser.newContext({
       acceptDownloads: false,
       serviceWorkers: "block",
-      ignoreHTTPSErrors: true,
       locale: "pt-BR",
       userAgent: DEFAULT_USER_AGENT,
       viewport: { width: 1280, height: 800 }
     });
     const page = await context.newPage();
-    const checkedHosts = new Map();
-
-    await page.route("**/*", async (route) => {
-      const req = route.request();
-      if (SKIPPED_RESOURCE_TYPES.has(req.resourceType())) {
-        return route.abort();
-      }
-
-      const requestUrl = req.url();
-      if (/^(about:|data:|blob:)/.test(requestUrl)) return route.continue();
-
-      try {
-        const candidate = new URL(requestUrl);
-        const key = `${candidate.protocol}//${candidate.host}`;
-        if (!checkedHosts.has(key)) {
-          checkedHosts.set(key, validatePublicUrl(candidate.href));
-        }
-        await checkedHosts.get(key);
-        await route.continue();
-      } catch {
-        await route.abort("blockedbyclient");
-      }
-    });
+    await page.route("**/*", createRequestGuard());
 
     let response = null;
     try {
