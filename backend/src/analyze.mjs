@@ -156,12 +156,27 @@ function summarize(violation) {
   };
 }
 
-export async function analyzePage(rawUrl) {
+function throwIfAborted(signal) {
+  if (signal?.aborted) {
+    throw signal.reason instanceof Error
+      ? signal.reason
+      : new Error("A análise foi cancelada.");
+  }
+}
+
+export async function analyzePage(rawUrl, { signal } = {}) {
   const target = await validatePublicUrl(rawUrl);
+  throwIfAborted(signal);
   const browser = await getBrowser();
   let context;
+  // Fechar o contexto interrompe navegação e axe-core em andamento.
+  const onAbort = () => {
+    context?.close().catch(() => {});
+  };
+  signal?.addEventListener("abort", onAbort, { once: true });
 
   try {
+    throwIfAborted(signal);
     context = await browser.newContext({
       acceptDownloads: false,
       serviceWorkers: "block",
@@ -171,6 +186,8 @@ export async function analyzePage(rawUrl) {
     });
     const page = await context.newPage();
     await page.route("**/*", createRequestGuard());
+    // O cancelamento pode ter chegado enquanto o contexto era criado.
+    throwIfAborted(signal);
 
     let response = null;
     try {
@@ -204,6 +221,7 @@ export async function analyzePage(rawUrl) {
         ? await validatePublicUrl(currentUrl)
         : target;
 
+    throwIfAborted(signal);
     const results = await new AxeBuilder({
       page,
       axeSource: AXE_PT_SOURCE
@@ -219,7 +237,11 @@ export async function analyzePage(rawUrl) {
       disclaimer:
         "A automação cobre apenas parte dos critérios. A inspeção manual continua obrigatória."
     };
+  } catch (error) {
+    throwIfAborted(signal);
+    throw error;
   } finally {
+    signal?.removeEventListener("abort", onAbort);
     await context?.close().catch(() => {});
   }
 }
