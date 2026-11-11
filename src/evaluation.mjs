@@ -1,13 +1,95 @@
 export const STORAGE_KEY = "tcc-prototipo-v1";
 
-export const QUESTIONS = [
-  "Todos os controles podem ser usados somente pelo teclado?",
-  "O foco permanece visível durante a navegação?",
-  "A ordem de navegação acompanha o conteúdo?",
-  "As alternativas textuais descrevem adequadamente as imagens?",
-  "As instruções dos formulários são compreensíveis?",
-  "O conteúdo permanece utilizável com ampliação de 200%?"
+/**
+ * Critérios da inspeção manual: pontos que a automação não consegue julgar.
+ * As respostas são guardadas pela posição do item, então novos critérios
+ * devem sempre ser acrescentados no FIM da lista.
+ */
+export const CHECKLIST = [
+  {
+    question: "Todos os controles podem ser usados somente pelo teclado?",
+    criterion: "WCAG 2.1.1 Teclado (A)",
+    howTo: "Sem usar o mouse, percorra a página com Tab e Shift+Tab e ative links, botões e menus com Enter ou Espaço."
+  },
+  {
+    question: "O foco permanece visível durante a navegação?",
+    criterion: "WCAG 2.4.7 Foco visível (AA)",
+    howTo: "Ao navegar com Tab, observe se sempre é possível ver qual elemento está selecionado."
+  },
+  {
+    question: "A ordem de navegação acompanha o conteúdo?",
+    criterion: "WCAG 2.4.3 Ordem do foco (A)",
+    howTo: "Confira se o foco segue a ordem lógica de leitura, sem saltos inesperados entre áreas da página."
+  },
+  {
+    question: "As alternativas textuais descrevem adequadamente as imagens?",
+    criterion: "WCAG 1.1.1 Conteúdo não textual (A)",
+    howTo: "Para cada imagem informativa, veja se o texto alternativo transmite a mesma informação; imagens decorativas devem ter alt vazio."
+  },
+  {
+    question: "As instruções dos formulários são compreensíveis?",
+    criterion: "WCAG 3.3.2 Rótulos ou instruções (A)",
+    howTo: "Verifique se cada campo informa o que preencher e o formato esperado (ex.: data, CPF) antes do envio."
+  },
+  {
+    question: "O conteúdo permanece utilizável com ampliação de 200%?",
+    criterion: "WCAG 1.4.4 Redimensionar texto (AA)",
+    howTo: "Amplie o navegador para 200% (Ctrl e +) e confira se nada é cortado, sobreposto ou fica inacessível."
+  },
+  {
+    question: "Links e botões indicam claramente o destino ou a ação?",
+    criterion: "WCAG 2.4.4 Finalidade do link (A)",
+    howTo: "Procure textos genéricos como \"clique aqui\" ou \"saiba mais\" que não façam sentido sem o texto ao redor."
+  },
+  {
+    question: "Vídeos e áudios têm legendas ou transcrição?",
+    criterion: "WCAG 1.2.1 e 1.2.2 Mídia pré-gravada (A)",
+    howTo: "Abra as mídias da página e confira se há legendas sincronizadas (vídeo) ou transcrição (áudio). Sem mídia, marque Não se aplica."
+  },
+  {
+    question: "As mensagens de erro identificam o campo e explicam como corrigir?",
+    criterion: "WCAG 3.3.1 e 3.3.3 Identificação e sugestão de erro (A/AA)",
+    howTo: "Envie um formulário com dados inválidos ou vazios e veja se o erro aponta o campo e diz o que fazer."
+  },
+  {
+    question: "A informação é transmitida sem depender apenas de cor?",
+    criterion: "WCAG 1.4.1 Uso de cor (A)",
+    howTo: "Confira se campos obrigatórios, erros, links e gráficos também usam texto, ícone ou sublinhado, não só cor."
+  },
+  {
+    question: "Animações, carrosséis e conteúdo em movimento podem ser pausados?",
+    criterion: "WCAG 2.2.2 Pausar, parar, ocultar (A) e 2.3.1 Três flashes (A)",
+    howTo: "Veja se conteúdo que se move por mais de 5 segundos tem controle para pausar e se nada pisca mais de 3 vezes por segundo."
+  },
+  {
+    question: "Limites de tempo podem ser desligados, ajustados ou estendidos?",
+    criterion: "WCAG 2.2.1 Tempo ajustável (A)",
+    howTo: "Se a página expira sessão ou avança sozinha, confira se há aviso e opção de ganhar mais tempo. Sem limite, marque Não se aplica."
+  },
+  {
+    question: "Títulos e rótulos descrevem o tema ou a finalidade do conteúdo?",
+    criterion: "WCAG 2.4.6 Cabeçalhos e rótulos (AA)",
+    howTo: "Leia apenas os títulos da página e os rótulos dos campos: eles devem bastar para entender cada seção e o que preencher."
+  },
+  {
+    question: "O conteúdo se adapta a telas estreitas sem rolagem horizontal?",
+    criterion: "WCAG 1.4.10 Refluxo (AA)",
+    howTo: "Reduza a janela para cerca de 320 px de largura (ou amplie para 400%) e confira se o texto se reorganiza sem rolagem lateral."
+  }
 ];
+
+export const QUESTIONS = CHECKLIST.map((item) => item.question);
+
+/** Avaliações salvas antes da ampliação do checklist tinham 6 itens. */
+export const LEGACY_CHECKLIST_SIZE = 6;
+
+/** Itens do checklist que valem para a avaliação (antigas mantêm 6). */
+export function checklistFor(record) {
+  if (!record) return CHECKLIST;
+  const size = Number(record?.checklistSize);
+  const valid = Number.isInteger(size) && size > 0;
+  return CHECKLIST.slice(0, valid ? size : LEGACY_CHECKLIST_SIZE);
+}
 
 export const SIMULATED_FINDINGS = [
   {
@@ -507,10 +589,12 @@ export function resolveEvaluationState(active) {
       : active.scenario === "findings"
         ? SIMULATED_REVIEW
         : [];
-  const count = Object.values(active.answers || {}).filter(
-    (a) => a && a.value && a.value !== "Não verificado"
-  ).length;
-  const pending = QUESTIONS.length - count;
+  const count = checklistFor(active).filter((_, i) => {
+    const a = active.answers?.[i];
+    return a && a.value && a.value !== "Não verificado";
+  }).length;
+  const checklist = checklistFor(active);
+  const pending = checklist.length - count;
   const reason =
     localizeFailureReason(active.failureReason) ||
     (active.scenario === "blocked"
@@ -560,7 +644,8 @@ export function computeAccessibilityMetrics(active) {
   let failedManual = 0;
   let notApplicableManual = 0;
 
-  for (let i = 0; i < QUESTIONS.length; i += 1) {
+  const checklist = checklistFor(active);
+  for (let i = 0; i < checklist.length; i += 1) {
     const val = answers[i]?.value || "Não verificado";
     if (val === "Atende") passedManual += 1;
     else if (val === "Não atende") failedManual += 1;
@@ -573,7 +658,7 @@ export function computeAccessibilityMetrics(active) {
     ? Math.round((passedManual / reviewedApplicable) * 100)
     : 0;
 
-  const manualCoverage = Math.round((count / QUESTIONS.length) * 100);
+  const manualCoverage = Math.round((count / checklist.length) * 100);
   const manualComplete = pending === 0;
   const isProvisional = !incomplete && !manualComplete;
 
@@ -638,7 +723,7 @@ export function computeAccessibilityMetrics(active) {
     notApplicableManual,
     pendingManual: pending,
     reviewedManual: count,
-    totalManual: QUESTIONS.length,
+    totalManual: checklist.length,
     totalFindings: data.length,
     severityCounts,
     level,

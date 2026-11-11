@@ -23,7 +23,7 @@ Sites / Worker: entrega dos arquivos estáticos
 | RF03 | Carregar página com navegador automatizado | Implementado com Playwright e publicado no Render |
 | RF04 | Executar análise automática | Implementado com axe-core e publicado no Render |
 | RF05 | Apresentar achados detalhados | Dados reais em produção (Vercel + Render); simulação como fallback local |
-| RF06 | Inspeção manual | Seis itens, respostas, filtros e observações |
+| RF06 | Inspeção manual | 14 itens com critério WCAG e orientação "Como verificar", respostas, filtros e observações (avaliações anteriores mantêm os 6 itens originais) |
 | RF07 | Salvar e recuperar avaliação | Histórico local com índice (%) e exclusão |
 | RF08 | Relatório | Gráfico interativo de % de acessibilidade, visualização e impressão em PDF |
 

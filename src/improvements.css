@@ -381,3 +381,25 @@ nav button,
 .review-list li {
   margin-bottom: 6px;
 }
+
+/* Critério WCAG e dica de verificação em cada item do checklist */
+.criterion-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  margin: 4px 0 14px;
+  font-size: 14px;
+  color: #3d5670;
+}
+
+.criterion-hint .badge {
+  margin: 0;
+  white-space: normal;
+}
+
+.report-criterion {
+  display: block;
+  margin-top: 2px;
+  font-weight: normal;
+}

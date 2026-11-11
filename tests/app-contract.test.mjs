@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
+  CHECKLIST,
+  LEGACY_CHECKLIST_SIZE,
   QUESTIONS,
+  checklistFor,
   STORAGE_KEY,
   computeAccessibilityMetrics,
   occurrenceMultiplier,
@@ -152,6 +155,7 @@ test("CT03 & CT05: tracks checklist progress and pending items for partial evalu
     url: "https://example.com/",
     date: "2026-10-29T12:00:00.000Z",
     scenario: "findings",
+    checklistSize: QUESTIONS.length,
     answers: {
       0: { value: "Atende", note: "Teclado funciona em todos os links" },
       1: { value: "Não atende", note: "Sem outline no menu" },
@@ -160,6 +164,44 @@ test("CT03 & CT05: tracks checklist progress and pending items for partial evalu
   });
   assert.equal(state.count, 2);
   assert.equal(state.pending, QUESTIONS.length - 2);
+});
+
+test("expanded checklist keeps WCAG references and old evaluations keep 6 items", () => {
+  assert.ok(CHECKLIST.length >= 12);
+  for (const item of CHECKLIST) {
+    assert.match(item.criterion, /^WCAG \d/);
+    assert.ok(item.howTo.length > 20);
+  }
+  assert.deepEqual(QUESTIONS.slice(0, LEGACY_CHECKLIST_SIZE), [
+    "Todos os controles podem ser usados somente pelo teclado?",
+    "O foco permanece visível durante a navegação?",
+    "A ordem de navegação acompanha o conteúdo?",
+    "As alternativas textuais descrevem adequadamente as imagens?",
+    "As instruções dos formulários são compreensíveis?",
+    "O conteúdo permanece utilizável com ampliação de 200%?"
+  ], "existing answers are stored by position");
+
+  const allAnswered = Object.fromEntries(
+    Array.from({ length: LEGACY_CHECKLIST_SIZE }, (_, i) => [i, { value: "Atende", note: "" }])
+  );
+  const legacy = {
+    id: "old",
+    url: "https://example.com/",
+    date: "2026-10-01T12:00:00.000Z",
+    scenario: "empty",
+    source: "simulation",
+    answers: allAnswered
+  };
+  assert.equal(checklistFor(legacy).length, LEGACY_CHECKLIST_SIZE);
+  const legacyMetrics = computeAccessibilityMetrics(legacy);
+  assert.equal(legacyMetrics.manualComplete, true, "a finished old evaluation stays finished");
+  assert.equal(legacyMetrics.totalManual, LEGACY_CHECKLIST_SIZE);
+
+  const current = { ...legacy, checklistSize: CHECKLIST.length };
+  const currentMetrics = computeAccessibilityMetrics(current);
+  assert.equal(currentMetrics.manualComplete, false);
+  assert.equal(currentMetrics.pendingManual, CHECKLIST.length - LEGACY_CHECKLIST_SIZE);
+  assert.equal(checklistFor(null).length, CHECKLIST.length);
 });
 
 test("CT04 & CT09: loads and persists records and preserves warning on storage failure", () => {

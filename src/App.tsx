@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  QUESTIONS,
+  CHECKLIST,
+  checklistFor,
   computeAccessibilityMetrics,
   loadStoredRecords,
   persistRecords,
@@ -31,6 +32,7 @@ export type RecordItem = {
   needsReview?: Finding[];
   engine?: string;
   failureReason?: string;
+  checklistSize?: number;
   answers: { [key: number]: { value: string; note: string } };
 };
 
@@ -170,6 +172,7 @@ export function App() {
       date: new Date().toISOString(),
       scenario,
       source: API_BASE_URL ? "real" : "simulation",
+      checklistSize: CHECKLIST.length,
       answers: {}
     };
 
@@ -278,6 +281,7 @@ export function App() {
   const { incomplete, data, review, count, pending, reason, availableFilters } =
     resolveEvaluationState(active);
   const metrics = computeAccessibilityMetrics(active);
+  const checklist = checklistFor(active);
 
   const filteredData = data.filter(
     (f: Finding) => filter === "Todos" || f.impact === filter
@@ -734,19 +738,19 @@ export function App() {
                 <section className="guidance">
                   <h2>Inspeção manual</h2>
                   <p>
-                    Complete os {QUESTIONS.length} critérios humanos para
+                    Complete os {checklist.length} critérios humanos para
                     consolidar o gráfico de acessibilidade no relatório.
                   </p>
                   <strong>
-                    {`${count} de ${QUESTIONS.length} ${count === 1 ? "item revisado" : "itens revisados"}`}
+                    {`${count} de ${checklist.length} ${count === 1 ? "item revisado" : "itens revisados"}`}
                     {metrics.manualScoreAvailable
                       ? ` (${metrics.manualScore}% de conformidade entre os itens aplicáveis revisados)`
                       : " (conformidade ainda não calculada)"}
                   </strong>
                   <progress
                     value={count}
-                    max={QUESTIONS.length}
-                    aria-label={`${count} de ${QUESTIONS.length} itens revisados`}
+                    max={checklist.length}
+                    aria-label={`${count} de ${checklist.length} itens revisados`}
                   />
                   <button
                     className="primary"
@@ -794,7 +798,7 @@ export function App() {
               <div className="checklist-live-bar">
                 <div>
                   <strong>
-                    {`${count} de ${QUESTIONS.length} ${count === 1 ? "item revisado" : "itens revisados"}`}
+                    {`${count} de ${checklist.length} ${count === 1 ? "item revisado" : "itens revisados"}`}
                   </strong>
                   <small>
                     {metrics.manualScoreAvailable
@@ -820,16 +824,23 @@ export function App() {
                   ))}
                 </div>
               </div>
-              {QUESTIONS.map((q, i) => {
+              {checklist.map((item, i) => {
+                const q = item.question;
                 const currentVal = active.answers[i]?.value || "Não verificado";
                 const isPending = currentVal === "Não verificado";
                 if (checklistFilter === "Pendentes" && !isPending) return null;
                 if (checklistFilter === "Revisados" && isPending) return null;
                 return (
-                  <fieldset key={q}>
+                  <fieldset key={q} aria-describedby={"howto" + i}>
                     <legend>
                       {i + 1}. {q}
                     </legend>
+                    <p className="criterion-hint" id={"howto" + i}>
+                      <span className="badge neutral">{item.criterion}</span>
+                      <span>
+                        <strong>Como verificar:</strong> {item.howTo}
+                      </span>
+                    </p>
                     <div className="radios">
                       {[
                         "Atende",
@@ -1221,7 +1232,7 @@ export function App() {
                   )}
                 </div>
               </div>
-              {QUESTIONS.map((q, i) => {
+              {checklist.map(({ question: q, criterion }, i) => {
                 const currentStatus =
                   active.answers[i]?.value || "Não verificado";
                 const hiddenOnScreen =
@@ -1235,6 +1246,7 @@ export function App() {
                     <div className="report-question-row">
                       <h3>
                         {i + 1}. {q}
+                        <small className="report-criterion">{criterion}</small>
                       </h3>
                       <span
                         className={
