@@ -8,6 +8,8 @@ import {
   checklistFor,
   STORAGE_KEY,
   computeAccessibilityMetrics,
+  parseRoute,
+  routeFor,
   occurrenceMultiplier,
   loadStoredRecords,
   localizeFailureReason,
@@ -249,8 +251,8 @@ test("CT04 & CT09: loads and persists records and preserves warning on storage f
   assert.match(failedSave.notice, /Não foi possível salvar no navegador/);
 
   // Regression check: go("results") must precede save(...) in start() so notice is not cleared
-  assert.doesNotMatch(app, /save\(\[[^\]]+\]\);\s*go\(["']results["']\)/);
-  assert.match(app, /go\(["']results["']\);\s*save\(\[/);
+  assert.doesNotMatch(app, /save\(\[[^\]]+\]\);\s*go\(["']results["']/);
+  assert.match(app, /go\(["']results["'](, \w+)?\);\s*save\(\[/);
 });
 
 test("handles real API analysis responses using standard Fetch Response.ok boolean", async () => {
@@ -453,4 +455,30 @@ test("keeps items that need manual review apart from the score", async () => {
   assert.deepEqual(resolveEvaluationState({ ...record, scenario: "error" }).review, []);
   // The simulated demo shows an example review item.
   assert.ok(resolveEvaluationState({ ...record, source: "simulation" }).review.length > 0);
+});
+
+test("maps screens to addresses so back/forward and reload work", () => {
+  assert.deepEqual(parseRoute(""), { page: "new" });
+  assert.deepEqual(parseRoute("#/"), { page: "new" });
+  assert.deepEqual(parseRoute("#/historico"), { page: "history" });
+  assert.deepEqual(parseRoute("#/ajuda"), { page: "help" });
+  assert.deepEqual(parseRoute("#/avaliacao/abc-123"), { page: "results", id: "abc-123" });
+  assert.deepEqual(parseRoute("#/avaliacao/abc-123/checklist"), { page: "checklist", id: "abc-123" });
+  assert.deepEqual(parseRoute("#/avaliacao/abc-123/relatorio"), { page: "report", id: "abc-123" });
+  assert.deepEqual(parseRoute("#/qualquer-coisa"), { page: "new" });
+  assert.deepEqual(parseRoute("#/avaliacao/abc/desconhecido"), { page: "new" });
+  // The skip link "#main" is not a route and must not change the screen.
+  assert.equal(parseRoute("#main"), null);
+
+  for (const [page, id] of [["new"], ["history"], ["help"], ["results", "x1"], ["checklist", "x1"], ["report", "x1"]]) {
+    assert.deepEqual(parseRoute(routeFor(page, id)), id ? { page, id } : { page });
+  }
+  assert.equal(routeFor("loading", "x1"), null);
+  assert.equal(routeFor("report", undefined), "#/");
+});
+
+test("saves typed notes after a pause instead of on every keystroke", () => {
+  assert.match(app, /answer\(i, currentVal, e\.target\.value, \{\s*deferSave: true\s*\}\)/);
+  assert.match(app, /addEventListener\("pagehide"/);
+  assert.match(app, /addEventListener\("popstate"/);
 });

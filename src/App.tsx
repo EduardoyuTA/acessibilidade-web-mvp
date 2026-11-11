@@ -4,11 +4,15 @@ import {
   checklistFor,
   computeAccessibilityMetrics,
   loadStoredRecords,
+  parseRoute,
   persistRecords,
   requestAnalysis,
   resolveEvaluationState,
+  routeFor,
   validateTargetUrl
 } from "./evaluation.mjs";
+
+const NOTE_SAVE_DELAY = 600;
 
 export type Finding = {
   title: string;
@@ -117,12 +121,115 @@ export function App() {
   const heading = useRef<HTMLHeadingElement>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const analysisController = useRef<AbortController | null>(null);
+  // Valores mais recentes para os eventos do navegador (voltar/avançar).
+  const recordsRef = useRef<RecordItem[]>(records);
+  recordsRef.current = records;
+  const pageRef = useRef(page);
+  pageRef.current = page;
+  // Salvamento adiado das observações digitadas no checklist.
+  const pendingSave = useRef<{
+    timer: ReturnType<typeof setTimeout>;
+    records: RecordItem[];
+  } | null>(null);
+
+  function commitRecords(nextRecords: RecordItem[], successNotice = "") {
+    const result = persistRecords(nextRecords);
+    if (!result.saved) {
+      setNotice(result.notice);
+      return false;
+    }
+    if (successNotice) setNotice(successNotice);
+    return true;
+  }
+
+  function flushPendingSave() {
+    const pending = pendingSave.current;
+    if (!pending) return;
+    clearTimeout(pending.timer);
+    pendingSave.current = null;
+    commitRecords(pending.records);
+  }
+
+  function cancelPendingSave() {
+    if (pendingSave.current) clearTimeout(pendingSave.current.timer);
+    pendingSave.current = null;
+  }
+
+  function stopRunningAnalysis() {
+    if (timer.current) {
+      clearInterval(timer.current);
+      timer.current = null;
+    }
+    analysisController.current?.abort();
+    analysisController.current = null;
+    setProgress(0);
+  }
+
+  function go(
+    nextPage: string,
+    record: RecordItem | null = active,
+    { push = true }: { push?: boolean } = {}
+  ) {
+    flushPendingSave();
+    if (record !== active) setActive(record);
+    setPage(nextPage);
+    setFilter("Todos");
+    setChecklistFilter("Todos");
+    setReportManualFilter("Todos");
+    setExpandAllFindings(false);
+    setError("");
+    setNotice("");
+
+    const hash = routeFor(nextPage, record?.id);
+    if (push && hash && hash !== window.location.hash) {
+      window.history.pushState(null, "", hash);
+    }
+  }
+
+  function applyRoute(route: { page: string; id?: string }) {
+    if (route.id) {
+      const record = recordsRef.current.find((r) => r.id === route.id);
+      if (!record) {
+        go("new", null, { push: false });
+        window.history.replaceState(null, "", "#/");
+        setNotice("Avaliação não encontrada no histórico deste navegador.");
+        return;
+      }
+      go(route.page, record, { push: false });
+      return;
+    }
+    go(route.page, active, { push: false });
+  }
+
+  // Voltar/avançar do navegador.
+  const onPopState = useRef<() => void>(() => {});
+  onPopState.current = () => {
+    const route = parseRoute(window.location.hash);
+    if (!route) return; // ex.: "#main" do link "Ir para o conteúdo"
+    if (pageRef.current === "loading") {
+      stopRunningAnalysis();
+      setActive(null);
+    }
+    applyRoute(route);
+  };
 
   useEffect(() => {
     const initial = loadStoredRecords();
     setRecords(initial.records);
+    recordsRef.current = initial.records;
+    // Abre a tela indicada no endereço (recarregar ou link direto).
+    const route = parseRoute(window.location.hash);
+    if (route && route.page !== "new") applyRoute(route);
     if (initial.notice) setNotice(initial.notice);
+
+    const handlePop = () => onPopState.current();
+    const handleHide = () => flushPendingSave();
+    window.addEventListener("popstate", handlePop);
+    window.addEventListener("pagehide", handleHide);
     return () => {
+      window.removeEventListener("popstate", handlePop);
+      window.removeEventListener("pagehide", handleHide);
+      flushPendingSave();
       if (timer.current) clearInterval(timer.current);
       analysisController.current?.abort();
     };
@@ -131,26 +238,17 @@ export function App() {
   useEffect(() => {
     heading.current?.focus();
     window.scrollTo(0, 0);
+    document.title =
+      page === "new"
+        ? "AcessoClaro | MVP de acessibilidade web"
+        : `${PAGE_TITLES[page]} | AcessoClaro`;
   }, [page]);
 
-  function go(nextPage: string) {
-    setPage(nextPage);
-    setFilter("Todos");
-    setChecklistFilter("Todos");
-    setReportManualFilter("Todos");
-    setExpandAllFindings(false);
-    setError("");
-    setNotice("");
-  }
-
-  function save(nextRecords: RecordItem[]) {
+  function save(nextRecords: RecordItem[], successNotice = "") {
+    // Uma gravação completa substitui qualquer observação ainda pendente.
+    cancelPendingSave();
     setRecords(nextRecords);
-    const result = persistRecords(nextRecords);
-    if (!result.saved) {
-      setNotice(result.notice);
-      return false;
-    }
-    return true;
+    return commitRecords(nextRecords, successNotice);
   }
 
   async function start(e: React.FormEvent) {
@@ -176,9 +274,9 @@ export function App() {
       answers: {}
     };
 
-    setActive(item);
     setProgress(0);
-    go("loading");
+    go("loading", item);
+    const baseRecords = recordsRef.current;
 
     if (!API_BASE_URL) {
       let stepCount = 0;
@@ -187,8 +285,9 @@ export function App() {
         setProgress(stepCount);
         if (stepCount === 3) {
           clearInterval(timer.current!);
-          go("results");
-          save([item, ...records]);
+          timer.current = null;
+          go("results", item);
+          save([item, ...baseRecords]);
         }
       }, 700);
       return;
@@ -212,9 +311,8 @@ export function App() {
         needsReview: payload.needsReview,
         engine: payload.engine
       };
-      setActive(completed);
-      go("results");
-      save([completed, ...records]);
+      go("results", completed);
+      save([completed, ...baseRecords]);
     } catch (cause) {
       if (cause instanceof DOMException && cause.name === "AbortError") {
         return;
@@ -227,45 +325,55 @@ export function App() {
             ? cause.message
             : "Não foi possível concluir a análise."
       };
-      setActive(failed);
-      go("results");
-      save([failed, ...records]);
+      go("results", failed);
+      save([failed, ...baseRecords]);
     } finally {
       analysisController.current = null;
     }
   }
 
   function cancelAnalysis() {
-    if (timer.current) {
-      clearInterval(timer.current);
-      timer.current = null;
-    }
-    analysisController.current?.abort();
-    analysisController.current = null;
-    setActive(null);
-    setProgress(0);
-    go("new");
+    stopRunningAnalysis();
+    go("new", null);
     setNotice("Análise cancelada.");
   }
 
-  function answer(index: number, value: string, note: string) {
+  function answer(
+    index: number,
+    value: string,
+    note: string,
+    { deferSave = false }: { deferSave?: boolean } = {}
+  ) {
     if (!active) return;
     const updated: RecordItem = {
       ...active,
       answers: { ...active.answers, [index]: { value, note } }
     };
+    const nextRecords = records.map((r) => (r.id === updated.id ? updated : r));
     setActive(updated);
-    if (save(records.map((r) => (r.id === updated.id ? updated : r)))) {
-      setNotice("Respostas salvas neste navegador.");
+
+    if (!deferSave) {
+      save(nextRecords, "Respostas salvas neste navegador.");
+      return;
     }
+
+    // Texto digitado: grava uma vez quando a pessoa para de digitar, em vez de
+    // a cada tecla (e sem repetir o aviso para leitores de tela).
+    setRecords(nextRecords);
+    if (pendingSave.current) clearTimeout(pendingSave.current.timer);
+    pendingSave.current = {
+      records: nextRecords,
+      timer: setTimeout(() => {
+        pendingSave.current = null;
+        commitRecords(nextRecords, "Observação salva neste navegador.");
+      }, NOTE_SAVE_DELAY)
+    };
   }
 
   function removeRecord(id: string) {
     const next = records.filter((r) => r.id !== id);
     if (active?.id === id) setActive(null);
-    if (save(next)) {
-      setNotice("Avaliação removida do histórico deste navegador.");
-    }
+    save(next, "Avaliação removida do histórico deste navegador.");
   }
 
   async function copyFindingGuidance(f: Finding) {
@@ -321,7 +429,15 @@ export function App() {
 
   return (
     <>
-      <a className="skip" href="#main">
+      <a
+        className="skip"
+        href="#main"
+        onClick={(e) => {
+          // Move o foco sem trocar o endereço (que guarda a tela atual).
+          e.preventDefault();
+          document.getElementById("main")?.focus();
+        }}
+      >
         Ir para o conteúdo
       </a>
       <header>
@@ -390,7 +506,7 @@ export function App() {
           </p>
           <small>Projeto acadêmico · 2026</small>
         </aside>
-        <main id="main">
+        <main id="main" tabIndex={-1}>
           <div className="eyebrow">
             {step >= 0 ? `ETAPA ${step + 1} DE 4` : "ACESSOCLARO"}
             <span>
@@ -866,7 +982,9 @@ export function App() {
                       id={"note" + i}
                       value={active.answers[i]?.note || ""}
                       onChange={(e) =>
-                        answer(i, currentVal, e.target.value)
+                        answer(i, currentVal, e.target.value, {
+                          deferSave: true
+                        })
                       }
                     />
                   </fieldset>
@@ -906,19 +1024,13 @@ export function App() {
                       <div className="history-actions">
                         <button
                           className="secondary"
-                          onClick={() => {
-                            setActive(r);
-                            go("results");
-                          }}
+                          onClick={() => go("results", r)}
                         >
                           Abrir avaliação
                         </button>
                         <button
                           className="secondary"
-                          onClick={() => {
-                            setActive(r);
-                            go("report");
-                          }}
+                          onClick={() => go("report", r)}
                         >
                           Ver relatório ({rowMetrics.overallScore}%)
                         </button>

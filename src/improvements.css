@@ -403,3 +403,8 @@ nav button,
   margin-top: 2px;
   font-weight: normal;
 }
+
+/* Destino do link "Ir para o conteúdo": recebe foco, mas não é um controle */
+main:focus {
+  outline: none;
+}

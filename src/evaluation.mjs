@@ -731,3 +731,48 @@ export function computeAccessibilityMetrics(active) {
   };
 }
 
+
+/* Rotas por endereço (hash), para o voltar/avançar do navegador e links diretos. */
+
+const EVALUATION_PAGES = { "": "results", checklist: "checklist", relatorio: "report" };
+
+/**
+ * Converte o hash do endereço em tela. Devolve `null` para hashes que não são
+ * rotas do app (ex.: "#main" do link "Ir para o conteúdo"), que devem ser ignorados.
+ */
+export function parseRoute(hash) {
+  const value = String(hash || "");
+  if (value === "" || value === "#") return { page: "new" };
+  if (!value.startsWith("#/")) return null;
+
+  const parts = value.slice(2).split("/").filter(Boolean).map(decodeURIComponent);
+  if (parts.length === 0) return { page: "new" };
+  if (parts[0] === "historico" && parts.length === 1) return { page: "history" };
+  if (parts[0] === "ajuda" && parts.length === 1) return { page: "help" };
+  if (parts[0] === "avaliacao" && parts[1] && parts.length <= 3) {
+    const page = EVALUATION_PAGES[parts[2] ?? ""];
+    if (page) return { page, id: parts[1] };
+  }
+  return { page: "new" };
+}
+
+/** Hash de uma tela; `null` para telas que não ganham endereço (carregamento). */
+export function routeFor(page, id) {
+  switch (page) {
+    case "new":
+      return "#/";
+    case "history":
+      return "#/historico";
+    case "help":
+      return "#/ajuda";
+    case "results":
+    case "checklist":
+    case "report": {
+      if (!id) return "#/";
+      const base = `#/avaliacao/${encodeURIComponent(id)}`;
+      return page === "results" ? base : `${base}/${page === "report" ? "relatorio" : "checklist"}`;
+    }
+    default:
+      return null;
+  }
+}

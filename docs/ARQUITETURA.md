@@ -36,6 +36,7 @@ Sites / Worker: entrega dos arquivos estáticos
 - Uma página por avaliação, não varredura de domínio.
 - Ausência de achados não comprova acessibilidade integral.
 - Checklist parcial é permitido e o relatório conserva pendências.
+- Cada tela tem endereço próprio por hash (`#/historico`, `#/avaliacao/<id>/relatorio` etc.), sem exigir configuração de rotas na hospedagem.
 - Respostas: Atende, Não atende, Não se aplica e Não verificado.
 - Interrupções permanecem identificadas como incompletas.
 - Simulação e observações humanas devem ser distinguíveis.
