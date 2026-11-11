@@ -211,14 +211,14 @@
   width: 64px;
   height: 18px;
   border-radius: 6px;
-  background: #cfd8e6;
+  background: var(--mock-logo);
 }
 
 .mock-link {
   width: 44px;
   height: 10px;
   border-radius: 5px;
-  background: #e3e8ef;
+  background: var(--mock-block);
 }
 
 .mock-icon-btn {
@@ -226,7 +226,7 @@
   height: 28px;
   margin-left: auto;
   border-radius: 8px;
-  background: #e3e8ef;
+  background: var(--mock-block);
 }
 
 .mock-hero {
@@ -240,8 +240,8 @@
 .mock-image {
   border-radius: 12px;
   background:
-    linear-gradient(135deg, transparent 55%, rgba(255, 255, 255, 0.5) 55%),
-    linear-gradient(160deg, #bcd0f5, #dbe7fb);
+    linear-gradient(135deg, transparent 55%, var(--mock-shine) 55%),
+    linear-gradient(160deg, var(--mock-image-a), var(--mock-image-b));
 }
 
 .mock-copy {
@@ -254,17 +254,17 @@
 .mock-line {
   height: 10px;
   border-radius: 5px;
-  background: #d5dde8;
+  background: var(--mock-line);
 }
 
 .mock-line.strong {
   height: 16px;
   width: 85%;
-  background: #9fb0c6;
+  background: var(--mock-strong);
 }
 
 .mock-line.faint {
-  background: #eef1f6;
+  background: var(--mock-faint);
 }
 
 .mock-line.short {
@@ -280,7 +280,7 @@
 .mock-input {
   flex: 0 0 62%;
   height: 44px;
-  border: 1.5px solid #e3e8ef;
+  border: 1.5px solid var(--mock-block);
   border-radius: 10px;
 }
 
@@ -288,7 +288,7 @@
   flex: 1;
   height: 44px;
   border-radius: 10px;
-  background: #c4d4f3;
+  background: var(--mock-cta);
 }
 
 [data-pin] {
@@ -297,12 +297,12 @@
 
 .mock-page[data-active="imagem"] [data-pin="imagem"],
 .mock-page[data-active="botao"] [data-pin="botao"] {
-  box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--red-stripe);
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--red-stripe);
 }
 
 .mock-page[data-active="contraste"] [data-pin="contraste"],
 .mock-page[data-active="campo"] [data-pin="campo"] {
-  box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--amber);
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--amber);
 }
 
 .scan-beam {
@@ -326,9 +326,9 @@
   width: 30px;
   height: 30px;
   padding: 0;
-  border: 2.5px solid #fff;
+  border: 2.5px solid var(--surface);
   border-radius: 50%;
-  color: #fff;
+  color: var(--on-accent);
   font-size: 13px;
   font-weight: 800;
   box-shadow: 0 4px 12px rgba(15, 27, 45, 0.25);
@@ -422,7 +422,7 @@
 }
 
 .float-track {
-  stroke: #eef1f6;
+  stroke: var(--track-2);
 }
 
 .float-ring {
@@ -604,7 +604,7 @@
   font-size: 44px;
   font-weight: 800;
   line-height: 1;
-  color: #e9edf3;
+  color: var(--track);
 }
 
 .how-icon {
@@ -629,8 +629,8 @@
 }
 
 .how-steps li:nth-child(3) .how-icon {
-  background: #fff4e5;
-  color: #a15c07;
+  background: var(--orange-soft);
+  color: var(--orange-text);
 }
 
 .how-steps h3 {
@@ -705,7 +705,7 @@
   padding: 22px 24px;
   border: 1px solid var(--border);
   border-radius: 16px;
-  background: #fff;
+  background: var(--surface);
   transition: filter 400ms var(--ease);
 }
 
@@ -848,18 +848,18 @@
   margin: 8px 0 0;
   padding: 36px 40px;
   border-radius: 24px;
-  background: var(--ink);
-  color: #fff;
+  background: var(--cta-bg);
+  color: var(--cta-text);
 }
 
 .welcome-cta h2 {
   font-size: 28px;
-  color: #fff;
+  color: var(--cta-text);
 }
 
 .welcome-cta p {
   margin: 0;
-  color: #c8d3e3;
+  color: var(--cta-muted);
 }
 
 .cta-actions {
@@ -872,8 +872,8 @@
 .cta-button {
   min-height: 54px;
   padding: 0 26px;
-  background: #fff;
-  color: var(--ink);
+  background: var(--cta-button-bg);
+  color: var(--cta-button-text);
   box-shadow: none;
 }
 
@@ -882,7 +882,7 @@
 }
 
 .welcome-cta .cta-button:focus-visible {
-  outline-color: #fff;
+  outline-color: var(--cta-text);
 }
 
 .welcome-pref {
@@ -893,7 +893,7 @@
   margin: 0;
   font-weight: 400;
   font-size: 14px;
-  color: #e3e8ef;
+  color: var(--cta-muted);
   cursor: pointer;
 }
 
@@ -904,7 +904,7 @@
 }
 
 .welcome-pref:has(input:focus-visible) {
-  outline: 3px solid #fff;
+  outline: 3px solid var(--cta-text);
   outline-offset: 2px;
   border-radius: 6px;
 }

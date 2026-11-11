@@ -35,6 +35,49 @@
   --slate: #475569;
   --track: #e9edf3;
 
+  /* Superfícies e estados */
+  --surface-2: #f1f4f9;
+  --hover: #e8edf4;
+  --track-2: #eef1f6;
+  --border-soft: #d5dde8;
+  --muted-graphic: #b7c2d0;
+  --moderate: #7a8aa0;
+  --code-bg: #fbfcfe;
+  --topbar-bg: rgba(255, 255, 255, 0.94);
+
+  /* Tons de apoio */
+  --red-tint: #fef3f2;
+  --red-tint-text: #912018;
+  --red-border: #f1b8b2;
+  --orange-soft: #fff4e5;
+  --orange-text: #a15c07;
+  --violet-soft: #f3f0ff;
+  --violet-text: #4c2fb3;
+  --review: #e3a008;
+  --success-soft: #dcfae6;
+
+  /* Texto sobre preenchimentos fortes e blocos invertidos */
+  --on-accent: #ffffff;
+  --inverse-bg: #0f1b2d;
+  --inverse-text: #ffffff;
+  --toast-icon: #2bd08f;
+
+  /* Demonstração da tela de boas-vindas */
+  --mock-logo: #cfd8e6;
+  --mock-block: #e3e8ef;
+  --mock-line: #d5dde8;
+  --mock-strong: #9fb0c6;
+  --mock-faint: #eef1f6;
+  --mock-cta: #c4d4f3;
+  --mock-image-a: #bcd0f5;
+  --mock-image-b: #dbe7fb;
+  --mock-shine: rgba(255, 255, 255, 0.5);
+  --cta-bg: #0f1b2d;
+  --cta-text: #ffffff;
+  --cta-muted: #c8d3e3;
+  --cta-button-bg: #ffffff;
+  --cta-button-text: #0f1b2d;
+
   /* Forma */
   --radius-sm: 10px;
   --radius: 14px;
@@ -57,6 +100,148 @@
   color: var(--ink);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Modo escuro ----------
+   Segue o sistema quando a pessoa não escolheu; o botão do cabeçalho grava
+   a escolha em data-theme no <html>. */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --bg: #0b1220;
+    --surface: #121a2b;
+    --surface-muted: #172135;
+    --surface-2: #0e1626;
+    --hover: #1f2a40;
+    --border: #263248;
+    --border-strong: #3a4a66;
+    --border-soft: #2c3a52;
+    --ink: #e6ecf5;
+    --ink-2: #c3cede;
+    --muted: #9fb0c6;
+    --blue: #7aa7ff;
+    --blue-hover: #a8c5ff;
+    --blue-soft: #17284a;
+    --green: #3ddc97;
+    --green-text: #7ef0bf;
+    --green-soft: #0f2c22;
+    --green-bright: #3ddc97;
+    --red: #ff7b7b;
+    --red-stripe: #ff7b7b;
+    --red-text: #ffaaa5;
+    --red-soft: #3a1719;
+    --amber: #f5a524;
+    --amber-text: #ffd27a;
+    --amber-soft: #35260b;
+    --neutral-text: #c3cede;
+    --neutral-soft: #1d273a;
+    --slate: #9aa8bd;
+    --track: #243049;
+    --track-2: #1c2639;
+    --muted-graphic: #4f5f78;
+    --moderate: #8a9bb4;
+    --code-bg: #0e1626;
+    --topbar-bg: rgba(18, 26, 43, 0.92);
+    --red-tint: #2c1416;
+    --red-tint-text: #ffb4ae;
+    --red-border: #6b2a2a;
+    --orange-soft: #33220e;
+    --orange-text: #ffc27a;
+    --violet-soft: #241c47;
+    --violet-text: #c4b5fd;
+    --review: #f5c04a;
+    --success-soft: #0f2c22;
+    --on-accent: #0b1220;
+    --inverse-bg: #e6ecf5;
+    --inverse-text: #0b1220;
+    --toast-icon: #0e7a4f;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+    --mock-logo: #34425c;
+    --mock-block: #263248;
+    --mock-line: #2f3c55;
+    --mock-strong: #51617d;
+    --mock-faint: #1e2940;
+    --mock-cta: #2b3f6b;
+    --mock-image-a: #2a3f6a;
+    --mock-image-b: #1d2c4d;
+    --mock-shine: rgba(255, 255, 255, 0.06);
+    --cta-bg: #17284a;
+    --cta-text: #ffffff;
+    --cta-muted: #c3cede;
+    --cta-button-bg: #7aa7ff;
+    --cta-button-text: #0b1220;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0b1220;
+  --surface: #121a2b;
+  --surface-muted: #172135;
+  --surface-2: #0e1626;
+  --hover: #1f2a40;
+  --border: #263248;
+  --border-strong: #3a4a66;
+  --border-soft: #2c3a52;
+  --ink: #e6ecf5;
+  --ink-2: #c3cede;
+  --muted: #9fb0c6;
+  --blue: #7aa7ff;
+  --blue-hover: #a8c5ff;
+  --blue-soft: #17284a;
+  --green: #3ddc97;
+  --green-text: #7ef0bf;
+  --green-soft: #0f2c22;
+  --green-bright: #3ddc97;
+  --red: #ff7b7b;
+  --red-stripe: #ff7b7b;
+  --red-text: #ffaaa5;
+  --red-soft: #3a1719;
+  --amber: #f5a524;
+  --amber-text: #ffd27a;
+  --amber-soft: #35260b;
+  --neutral-text: #c3cede;
+  --neutral-soft: #1d273a;
+  --slate: #9aa8bd;
+  --track: #243049;
+  --track-2: #1c2639;
+  --muted-graphic: #4f5f78;
+  --moderate: #8a9bb4;
+  --code-bg: #0e1626;
+  --topbar-bg: rgba(18, 26, 43, 0.92);
+  --red-tint: #2c1416;
+  --red-tint-text: #ffb4ae;
+  --red-border: #6b2a2a;
+  --orange-soft: #33220e;
+  --orange-text: #ffc27a;
+  --violet-soft: #241c47;
+  --violet-text: #c4b5fd;
+  --review: #f5c04a;
+  --success-soft: #0f2c22;
+  --on-accent: #0b1220;
+  --inverse-bg: #e6ecf5;
+  --inverse-text: #0b1220;
+  --toast-icon: #0e7a4f;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --mock-logo: #34425c;
+  --mock-block: #263248;
+  --mock-line: #2f3c55;
+  --mock-strong: #51617d;
+  --mock-faint: #1e2940;
+  --mock-cta: #2b3f6b;
+  --mock-image-a: #2a3f6a;
+  --mock-image-b: #1d2c4d;
+  --mock-shine: rgba(255, 255, 255, 0.06);
+  --cta-bg: #17284a;
+  --cta-text: #ffffff;
+  --cta-muted: #c3cede;
+  --cta-button-bg: #7aa7ff;
+  --cta-button-text: #0b1220;
 }
 
 *,
@@ -181,7 +366,7 @@ main:focus {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--topbar-bg);
   backdrop-filter: saturate(1.4) blur(8px);
   border-bottom: 1px solid var(--border);
 }
@@ -216,7 +401,7 @@ main:focus {
   gap: 4px;
   padding: 4px;
   border-radius: 12px;
-  background: #f1f4f9;
+  background: var(--surface-2);
 }
 
 .main-nav button {
@@ -234,7 +419,7 @@ main:focus {
 }
 
 .main-nav button:hover:not(:disabled) {
-  background: #e8edf4;
+  background: var(--hover);
   color: var(--ink);
 }
 
@@ -344,7 +529,7 @@ main {
 
 .stepper button[aria-current="step"] .number {
   background: var(--blue);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .stepper button.done .number {
@@ -432,7 +617,7 @@ main {
 .primary {
   border: 0;
   background: var(--blue);
-  color: #fff;
+  color: var(--on-accent);
   box-shadow: 0 1px 2px rgba(30, 86, 207, 0.3);
 }
 
@@ -448,7 +633,7 @@ main {
 
 .secondary:hover:not(:disabled) {
   background: var(--blue-soft);
-  border-color: #b4c3d8;
+  border-color: var(--border-strong);
 }
 
 .primary:active:not(:disabled),
@@ -466,11 +651,11 @@ main {
 
 .danger-btn {
   color: var(--red);
-  border-color: #f1b8b2;
+  border-color: var(--red-border);
 }
 
 .danger-btn:hover:not(:disabled) {
-  background: #fef3f2;
+  background: var(--red-tint);
   border-color: var(--red);
 }
 
@@ -673,8 +858,8 @@ form small {
 }
 
 .tone-2 .explain-icon {
-  background: #fff4e5;
-  color: #a15c07;
+  background: var(--orange-soft);
+  color: var(--orange-text);
 }
 
 .empty {
@@ -698,7 +883,7 @@ form small {
 }
 
 .success {
-  background: #dcfae6;
+  background: var(--success-soft);
   color: var(--green-text);
 }
 
@@ -777,12 +962,12 @@ form small {
 }
 
 .filters button:hover {
-  background: #e2e8f2;
+  background: var(--hover);
 }
 
 .filters button[aria-pressed="true"] {
-  background: var(--ink);
-  color: #fff;
+  background: var(--inverse-bg);
+  color: var(--inverse-text);
   font-weight: 700;
 }
 
@@ -790,7 +975,7 @@ form small {
   gap: 4px;
   padding: 4px;
   border-radius: 12px;
-  background: #f1f4f9;
+  background: var(--surface-2);
   width: fit-content;
   max-width: 100%;
 }
@@ -802,7 +987,7 @@ form small {
 }
 
 .chart-tabs button:hover {
-  background: #e8edf4;
+  background: var(--hover);
 }
 
 .chart-tabs button[aria-pressed="true"] {
@@ -861,7 +1046,7 @@ form small {
   top: 0;
   bottom: 0;
   width: 4px;
-  background: #b7c2d0;
+  background: var(--muted-graphic);
 }
 
 .finding.sev-critical::before {
@@ -873,11 +1058,11 @@ form small {
 }
 
 .finding.sev-moderate::before {
-  background: #7a8aa0;
+  background: var(--moderate);
 }
 
 .finding.sev-review::before {
-  background: #e3a008;
+  background: var(--review);
 }
 
 .finding summary,
@@ -1051,7 +1236,7 @@ progress::-moz-progress-bar {
   align-items: center;
   margin-bottom: 20px;
   padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--topbar-bg);
   backdrop-filter: blur(6px);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -1096,7 +1281,7 @@ legend + * {
   height: 28px;
   margin-top: -1px;
   border-radius: 50%;
-  border: 2px dashed #b7c2d0;
+  border: 2px dashed var(--muted-graphic);
   color: var(--muted);
   font-size: 13px;
   font-weight: 700;
@@ -1104,7 +1289,7 @@ legend + * {
 
 fieldset:not([data-status="Não verificado"]) .status-seal {
   border: 0;
-  color: #fff;
+  color: var(--on-accent);
   animation: pop 300ms var(--ease) both;
 }
 
@@ -1152,7 +1337,7 @@ fieldset[data-status="Não se aplica"] .status-seal {
   min-height: 48px;
   margin: 0;
   padding: 6px 10px;
-  border: 1.5px solid #d5dde8;
+  border: 1.5px solid var(--border-soft);
   border-radius: 12px;
   background: var(--surface);
   font-weight: 500;
@@ -1199,13 +1384,13 @@ fieldset[data-status="Não se aplica"] .status-seal {
 
 .radios label[data-value="Não atende"]:has(input:checked) {
   border-color: var(--red);
-  background: #fef3f2;
-  color: #912018;
+  background: var(--red-tint);
+  color: var(--red-tint-text);
 }
 
 .radios label[data-value="Não se aplica"]:has(input:checked) {
   border-color: var(--slate);
-  background: #f1f4f9;
+  background: var(--surface-2);
   color: var(--ink);
 }
 
@@ -1331,7 +1516,7 @@ fieldset > label {
 }
 
 .gauge-track {
-  stroke: #eef1f6;
+  stroke: var(--track-2);
 }
 
 .gauge-fill {
@@ -1396,7 +1581,7 @@ fieldset > label {
   width: 100%;
   height: 12px;
   border-radius: 999px;
-  background: #eef1f6;
+  background: var(--track-2);
   overflow: hidden;
 }
 
@@ -1432,7 +1617,7 @@ fieldset > label {
   width: fit-content;
   max-width: 100%;
   border-radius: 12px;
-  background: #f1f4f9;
+  background: var(--surface-2);
 }
 
 .quick-pill {
@@ -1447,12 +1632,12 @@ fieldset > label {
 }
 
 .quick-pill:hover {
-  background: #e8edf4;
+  background: var(--hover);
 }
 
 .quick-pill[aria-pressed="true"] {
   background: var(--blue);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 700;
 }
 
@@ -1516,8 +1701,8 @@ fieldset > label {
   gap: 12px;
   padding: 10px 10px 10px 16px;
   border-radius: 12px;
-  background: var(--ink);
-  color: #fff;
+  background: var(--inverse-bg);
+  color: var(--inverse-text);
   font-size: 15px;
   box-shadow: var(--shadow-lg);
   pointer-events: auto;
@@ -1525,15 +1710,16 @@ fieldset > label {
 }
 
 .toast > .icon {
-  color: var(--green-bright);
+  color: var(--toast-icon);
 }
 
 .toast-error {
   background: var(--red);
+  color: var(--on-accent);
 }
 
 .toast-error > .icon {
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .toast > span {
@@ -1548,16 +1734,16 @@ fieldset > label {
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: #fff;
+  color: inherit;
   transition: background-color var(--fast) ease;
 }
 
 .toast-close:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: color-mix(in srgb, currentColor 14%, transparent);
 }
 
 .toast-close:focus-visible {
-  outline-color: #fff;
+  outline-color: currentColor;
 }
 
 /* ---------- Movimento ---------- */
@@ -1757,7 +1943,7 @@ fieldset > label {
     padding: 8px 12px calc(10px + env(safe-area-inset-bottom));
     border-radius: 0;
     border-top: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.97);
+    background: var(--topbar-bg);
     backdrop-filter: blur(8px);
   }
 
@@ -1948,7 +2134,7 @@ fieldset > label {
 @media print {
   :root,
   body {
-    background: #fff;
+    background: var(--surface);
     color: #000;
   }
 
@@ -2019,4 +2205,50 @@ fieldset > label {
 
 .elapsed strong {
   color: var(--ink);
+}
+
+/* Botão de tema */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink-2);
+  transition: background-color var(--fast) ease, border-color var(--fast) ease,
+    color var(--fast) ease;
+}
+
+.theme-toggle:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.theme-icon {
+  display: grid;
+  animation: theme-spin 400ms var(--ease) both;
+}
+
+@keyframes theme-spin {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Troca de tema suave no fundo da página */
+body {
+  transition: background-color 250ms ease, color 250ms ease;
 }

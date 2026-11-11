@@ -544,3 +544,13 @@ test("welcome screen has its own address and opens the app at the root", () => {
   assert.match(app, /shouldShowWelcomeOnOpen\(\)/);
   assert.match(app, /replaceState\(null, "", "#\/boas-vindas"\)/);
 });
+
+test("dark mode follows the system, can be chosen, and applies before first paint", async () => {
+  const init = await readFile(new URL("../public/theme-init.js", import.meta.url), "utf8");
+  assert.match(html, /<script src="\/theme-init\.js"><\/script>/);
+  assert.match(html, /<meta name="color-scheme" content="light dark"/);
+  assert.match(init, /acessoclaro-tema/);
+  assert.match(css, /@media \(prefers-color-scheme: dark\)\s*\{\s*:root:not\(\[data-theme="light"\]\)/);
+  assert.match(css, /:root\[data-theme="dark"\]\s*\{/);
+  assert.match(app, /<ThemeToggle \/>/);
+});

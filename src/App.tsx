@@ -19,6 +19,7 @@ import {
 } from "./components/FindingsGuide.tsx";
 import { ManualInspection } from "./components/ManualInspection.tsx";
 import { Welcome, shouldShowWelcomeOnOpen } from "./components/Welcome.tsx";
+import { ThemeToggle } from "./components/ThemeToggle.tsx";
 import type { Finding, RecordItem } from "./types.ts";
 
 export type { Finding, RecordItem } from "./types.ts";
@@ -456,6 +457,8 @@ export function App() {
               </button>
             ))}
           </nav>
+          <div className="topbar-actions">
+          <ThemeToggle />
           <span className={"mode-badge " + (API_BASE_URL ? "live" : "demo")}>
             <span className="mode-dot" aria-hidden="true" />
             <span className="label-long">
@@ -467,6 +470,7 @@ export function App() {
               {API_BASE_URL ? "Análise real" : "Simulado"}
             </span>
           </span>
+          </div>
         </div>
       </header>
       <div className="shell">

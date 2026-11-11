@@ -130,12 +130,12 @@
 
 .severity-bar .sev-moderate,
 .severity-legend .sev-moderate .legend-dot {
-  background: #7a8aa0;
+  background: var(--moderate);
 }
 
 .severity-bar .sev-minor,
 .severity-legend .sev-minor .legend-dot {
-  background: #b7c2d0;
+  background: var(--muted-graphic);
 }
 
 .severity-legend {
@@ -221,7 +221,7 @@
 
 .best-badge {
   background: var(--blue);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .fixed-mark {
@@ -232,7 +232,7 @@
   height: 24px;
   border-radius: 50%;
   background: var(--green);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .guide-card.is-fixed .fixed-mark {
@@ -265,7 +265,7 @@
   margin-bottom: 16px;
   padding: 4px;
   border-radius: 12px;
-  background: #f1f4f9;
+  background: var(--surface-2);
   width: fit-content;
   max-width: 100%;
   overflow-x: auto;
@@ -287,7 +287,7 @@
 }
 
 .tab-list [role="tab"]:hover {
-  background: #e8edf4;
+  background: var(--hover);
 }
 
 .tab-list [role="tab"][aria-selected="true"] {
@@ -340,8 +340,8 @@
 .audiences li {
   padding: 4px 12px;
   border-radius: 999px;
-  background: #f3f0ff;
-  color: #4c2fb3;
+  background: var(--violet-soft);
+  color: var(--violet-text);
   font-size: 13px;
   font-weight: 700;
 }
@@ -426,8 +426,8 @@
 }
 
 .code-before figcaption {
-  background: #fef3f2;
-  color: #912018;
+  background: var(--red-tint);
+  color: var(--red-tint-text);
 }
 
 .code-after figcaption {
@@ -438,7 +438,7 @@
 .code-compare pre {
   margin: 0;
   padding: 12px;
-  background: #fbfcfe;
+  background: var(--code-bg);
   overflow-x: auto;
 }
 

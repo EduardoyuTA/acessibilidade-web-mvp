@@ -19,7 +19,7 @@
   gap: 4px;
   padding: 4px;
   border-radius: 12px;
-  background: #e9edf3;
+  background: var(--track);
 }
 
 .view-toggle button {
@@ -37,7 +37,7 @@
 }
 
 .view-toggle button:hover {
-  background: #dfe5ee;
+  background: var(--hover);
 }
 
 .view-toggle button[aria-pressed="true"] {
@@ -114,7 +114,7 @@
 }
 
 .is-complete .chip-count {
-  background: rgba(255, 255, 255, 0.7);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
 }
 
 /* ---------- Cartão guiado ---------- */
@@ -185,7 +185,7 @@
 .guided-card[data-status="Não atende"] h2 .status-seal,
 .guided-card[data-status="Não se aplica"] h2 .status-seal {
   border: 0;
-  color: #fff;
+  color: var(--on-accent);
   animation: pop 300ms var(--ease) both;
 }
 
@@ -280,7 +280,7 @@
 .howto-steps label.is-done .step-box {
   border-color: var(--green);
   background: var(--green);
-  color: #fff;
+  color: var(--on-accent);
   animation: pop 260ms var(--ease) both;
 }
 
@@ -458,7 +458,7 @@
   margin-bottom: 16px;
   border-radius: 50%;
   background: var(--green);
-  color: #fff;
+  color: var(--on-accent);
   box-shadow: 0 0 0 10px var(--green-soft);
   animation: pop 500ms var(--ease) both 120ms;
 }
@@ -570,7 +570,7 @@
 }
 
 .ring-track {
-  stroke: #eef1f6;
+  stroke: var(--track-2);
 }
 
 .ring-fill {
