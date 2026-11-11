@@ -7,7 +7,11 @@ import {
   QUESTIONS,
   checklistFor,
   STORAGE_KEY,
+  CHECKLIST_CATEGORIES,
   computeAccessibilityMetrics,
+  findingGain,
+  projectFixPlan,
+  ruleIdOf,
   parseRoute,
   routeFor,
   occurrenceMultiplier,
@@ -19,9 +23,14 @@ import {
   resolveEvaluationState,
   validateTargetUrl
 } from "../src/evaluation.mjs";
+import { AUDIENCES, FIX_GUIDES, guideFor } from "../src/fixGuides.mjs";
 
 const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+const inspection = await readFile(
+  new URL("../src/components/ManualInspection.tsx", import.meta.url),
+  "utf8"
+);
 const css = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
 
 test("uses the AcessoClaro identity in the document and interface", () => {
@@ -478,7 +487,60 @@ test("maps screens to addresses so back/forward and reload work", () => {
 });
 
 test("saves typed notes after a pause instead of on every keystroke", () => {
-  assert.match(app, /answer\(i, currentVal, e\.target\.value, \{\s*deferSave: true\s*\}\)/);
+  assert.match(inspection, /e\.target\.value, \{\s*deferSave: true\s*\}\)/);
   assert.match(app, /addEventListener\("pagehide"/);
   assert.match(app, /addEventListener\("popstate"/);
+});
+
+test("fix guides explain why, who is affected and how to fix with examples", () => {
+  assert.ok(Object.keys(FIX_GUIDES).length >= 20);
+  for (const [id, guide] of Object.entries(FIX_GUIDES)) {
+    assert.ok(guide.why.length > 20, id);
+    assert.ok(guide.steps.length >= 1, id);
+    assert.ok(guide.before && guide.after && guide.before !== guide.after, id);
+    for (const audience of guide.audiences) assert.ok(AUDIENCES[audience], `${id}: ${audience}`);
+  }
+  const known = guideFor({ rule: "image-alt · WCAG 2.2 / 1.1.1", fix: "f" });
+  assert.equal(known.id, "image-alt");
+  assert.equal(known.generic, false);
+
+  const unknown = guideFor({ rule: "regra-nova · wcag2a", evidence: "Evidência", fix: "Corrija assim." });
+  assert.equal(unknown.generic, true);
+  assert.deepEqual(unknown.steps, ["Corrija assim."]);
+  assert.equal(ruleIdOf({ rule: "color-contrast · WCAG 2.0 Nível AA" }), "color-contrast");
+});
+
+test("fix plan projects the automatic index without changing the official score", () => {
+  const findings = [
+    { title: "A", impact: "Crítico", rule: "button-name · x" },
+    { title: "B", impact: "Sério", rule: "color-contrast · x", occurrences: 10 },
+    { title: "C", impact: "Leve", rule: "list · x" }
+  ];
+  // 100 - 20 - 18 - 4 = 58
+  assert.deepEqual(projectFixPlan(findings, []), { current: 58, projected: 58, gain: 0, fixedCount: 0, total: 3 });
+  const plan = projectFixPlan(findings, ["button-name", "color-contrast"]);
+  assert.equal(plan.projected, 96);
+  assert.equal(plan.gain, 38);
+  assert.equal(plan.fixedCount, 2);
+  assert.equal(findingGain(findings, findings[1]), 18);
+  assert.equal(findingGain(findings, findings[2]), 4);
+
+  // The official metrics ignore the plan.
+  const record = { id: "p", url: "https://example.com/", date: "2026-11-11T12:00:00.000Z", scenario: "findings", source: "real", findings, fixPlan: ["button-name"], answers: {} };
+  assert.equal(computeAccessibilityMetrics(record).autoScore, 58);
+});
+
+test("checklist items carry a category and practical steps for the guided mode", () => {
+  assert.deepEqual(CHECKLIST_CATEGORIES, ["Teclado e foco", "Conteúdo e imagens", "Formulários", "Visual e leitura", "Mídia e movimento"]);
+  for (const item of CHECKLIST) {
+    assert.ok(CHECKLIST_CATEGORIES.includes(item.category), item.question);
+    assert.ok(item.steps.length >= 3, item.question);
+  }
+});
+
+test("welcome screen has its own address and opens the app at the root", () => {
+  assert.deepEqual(parseRoute("#/boas-vindas"), { page: "welcome" });
+  assert.equal(routeFor("welcome"), "#/boas-vindas");
+  assert.match(app, /shouldShowWelcomeOnOpen\(\)/);
+  assert.match(app, /replaceState\(null, "", "#\/boas-vindas"\)/);
 });

@@ -386,6 +386,10 @@ main {
   margin-bottom: 28px;
 }
 
+.columns > * {
+  min-width: 0;
+}
+
 .columns {
   display: grid;
   grid-template-columns: minmax(0, 1.85fr) minmax(280px, 1fr);
@@ -1677,7 +1681,7 @@ fieldset > label {
   }
 
   .columns {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   /* O nome completo continua para leitores de tela; na tela, só o curto

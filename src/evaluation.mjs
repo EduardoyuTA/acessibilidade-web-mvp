@@ -9,76 +9,107 @@ export const CHECKLIST = [
   {
     question: "Todos os controles podem ser usados somente pelo teclado?",
     criterion: "WCAG 2.1.1 Teclado (A)",
+    category: "Teclado e foco",
+    steps: ["Clique na barra de endereço e pressione Tab para entrar na página.", "Percorra menus, links, botões e campos só com Tab e Shift+Tab.", "Ative cada controle com Enter ou Espaço; abra e feche menus.", "Confira se nenhum elemento prende o foco sem saída (Esc deve fechar janelas)."],
     howTo: "Sem usar o mouse, percorra a página com Tab e Shift+Tab e ative links, botões e menus com Enter ou Espaço."
   },
   {
     question: "O foco permanece visível durante a navegação?",
     criterion: "WCAG 2.4.7 Foco visível (AA)",
+    category: "Teclado e foco",
+    steps: ["Navegue com Tab pela página inteira.", "Em cada parada, confira se há contorno ou destaque bem visível.", "Repare em menus, cartões e botões estilizados: são os que mais perdem o foco."],
     howTo: "Ao navegar com Tab, observe se sempre é possível ver qual elemento está selecionado."
   },
   {
     question: "A ordem de navegação acompanha o conteúdo?",
     criterion: "WCAG 2.4.3 Ordem do foco (A)",
+    category: "Teclado e foco",
+    steps: ["Navegue com Tab do topo ao rodapé.", "Compare a ordem do foco com a ordem visual de leitura.", "Abra uma janela ou menu e veja se o foco vai para dentro dela."],
     howTo: "Confira se o foco segue a ordem lógica de leitura, sem saltos inesperados entre áreas da página."
   },
   {
     question: "As alternativas textuais descrevem adequadamente as imagens?",
     criterion: "WCAG 1.1.1 Conteúdo não textual (A)",
+    category: "Conteúdo e imagens",
+    steps: ["Liste as imagens que transmitem informação (fotos, gráficos, ícones de ação).", "Inspecione o atributo alt de cada uma (botão direito → Inspecionar).", "Confira se o texto diz o que a imagem comunica, não só \"imagem\" ou o nome do arquivo.", "Imagens só decorativas devem ter alt vazio (alt=\"\")."],
     howTo: "Para cada imagem informativa, veja se o texto alternativo transmite a mesma informação; imagens decorativas devem ter alt vazio."
   },
   {
     question: "As instruções dos formulários são compreensíveis?",
     criterion: "WCAG 3.3.2 Rótulos ou instruções (A)",
+    category: "Formulários",
+    steps: ["Encontre os formulários da página (busca, contato, cadastro).", "Confira se cada campo tem um rótulo visível que continua visível ao digitar.", "Veja se formatos especiais (data, CPF, telefone) são explicados antes do envio."],
     howTo: "Verifique se cada campo informa o que preencher e o formato esperado (ex.: data, CPF) antes do envio."
   },
   {
     question: "O conteúdo permanece utilizável com ampliação de 200%?",
     criterion: "WCAG 1.4.4 Redimensionar texto (AA)",
+    category: "Visual e leitura",
+    steps: ["Amplie o navegador para 200% (Ctrl e + até 200%).", "Percorra a página inteira procurando texto cortado ou sobreposto.", "Confira se menus e botões continuam acessíveis."],
     howTo: "Amplie o navegador para 200% (Ctrl e +) e confira se nada é cortado, sobreposto ou fica inacessível."
   },
   {
     question: "Links e botões indicam claramente o destino ou a ação?",
     criterion: "WCAG 2.4.4 Finalidade do link (A)",
+    category: "Conteúdo e imagens",
+    steps: ["Leia os textos dos links e botões da página.", "Procure textos genéricos: \"clique aqui\", \"saiba mais\", \"veja\".", "Confira se o destino fica claro pelo próprio texto ou pela frase em volta."],
     howTo: "Procure textos genéricos como \"clique aqui\" ou \"saiba mais\" que não façam sentido sem o texto ao redor."
   },
   {
     question: "Vídeos e áudios têm legendas ou transcrição?",
     criterion: "WCAG 1.2.1 e 1.2.2 Mídia pré-gravada (A)",
+    category: "Mídia e movimento",
+    steps: ["Encontre vídeos e áudios na página.", "Ative as legendas do player e confira se acompanham a fala.", "Para áudio puro (podcast), procure uma transcrição em texto."],
     howTo: "Abra as mídias da página e confira se há legendas sincronizadas (vídeo) ou transcrição (áudio). Sem mídia, marque Não se aplica."
   },
   {
     question: "As mensagens de erro identificam o campo e explicam como corrigir?",
     criterion: "WCAG 3.3.1 e 3.3.3 Identificação e sugestão de erro (A/AA)",
+    category: "Formulários",
+    steps: ["Envie um formulário vazio ou com dados inválidos.", "Confira se a mensagem aponta qual campo está errado.", "Veja se ela explica como corrigir, e não só \"campo inválido\"."],
     howTo: "Envie um formulário com dados inválidos ou vazios e veja se o erro aponta o campo e diz o que fazer."
   },
   {
     question: "A informação é transmitida sem depender apenas de cor?",
     criterion: "WCAG 1.4.1 Uso de cor (A)",
+    category: "Visual e leitura",
+    steps: ["Procure informações indicadas só por cor: campos obrigatórios, erros, status.", "Confira se links dentro de textos têm sublinhado ou outro sinal além da cor.", "Em gráficos, veja se há rótulos ou padrões além das cores."],
     howTo: "Confira se campos obrigatórios, erros, links e gráficos também usam texto, ícone ou sublinhado, não só cor."
   },
   {
     question: "Animações, carrosséis e conteúdo em movimento podem ser pausados?",
     criterion: "WCAG 2.2.2 Pausar, parar, ocultar (A) e 2.3.1 Três flashes (A)",
+    category: "Mídia e movimento",
+    steps: ["Procure carrosséis, banners animados e vídeos que tocam sozinhos.", "Confira se há botão para pausar ou parar o movimento.", "Observe se algo pisca rapidamente (mais de 3 vezes por segundo)."],
     howTo: "Veja se conteúdo que se move por mais de 5 segundos tem controle para pausar e se nada pisca mais de 3 vezes por segundo."
   },
   {
     question: "Limites de tempo podem ser desligados, ajustados ou estendidos?",
     criterion: "WCAG 2.2.1 Tempo ajustável (A)",
+    category: "Mídia e movimento",
+    steps: ["Veja se a página expira sessão, recarrega ou avança sozinha.", "Se houver limite, confira se há aviso antes do fim.", "Confira se é possível pedir mais tempo ou desligar o limite."],
     howTo: "Se a página expira sessão ou avança sozinha, confira se há aviso e opção de ganhar mais tempo. Sem limite, marque Não se aplica."
   },
   {
     question: "Títulos e rótulos descrevem o tema ou a finalidade do conteúdo?",
     criterion: "WCAG 2.4.6 Cabeçalhos e rótulos (AA)",
+    category: "Conteúdo e imagens",
+    steps: ["Leia só os títulos (h1, h2…) da página, em ordem.", "Confira se eles resumem o conteúdo de cada seção.", "Leia os rótulos dos campos: devem dizer o que preencher."],
     howTo: "Leia apenas os títulos da página e os rótulos dos campos: eles devem bastar para entender cada seção e o que preencher."
   },
   {
     question: "O conteúdo se adapta a telas estreitas sem rolagem horizontal?",
     criterion: "WCAG 1.4.10 Refluxo (AA)",
+    category: "Visual e leitura",
+    steps: ["Reduza a janela para cerca de 320 px de largura (ou amplie para 400%).", "Role a página verticalmente procurando conteúdo que exige rolagem lateral.", "Confira se menus viram um botão e se o texto se reorganiza."],
     howTo: "Reduza a janela para cerca de 320 px de largura (ou amplie para 400%) e confira se o texto se reorganiza sem rolagem lateral."
   }
 ];
 
 export const QUESTIONS = CHECKLIST.map((item) => item.question);
+
+/** Categorias do checklist, na ordem em que aparecem. */
+export const CHECKLIST_CATEGORIES = [...new Set(CHECKLIST.map((item) => item.category))];
 
 /** Avaliações salvas antes da ampliação do checklist tinham 6 itens. */
 export const LEGACY_CHECKLIST_SIZE = 6;
@@ -630,6 +661,51 @@ const IMPACT_WEIGHTS = {
  * 10 = 1,5x, 100 ou mais = 2x (teto). Assim um problema espalhado pela página
  * pesa mais que um caso isolado, sem que uma única regra zere o índice.
  */
+/** Pontos que um achado tira do índice automático (gravidade × ocorrências). */
+export function findingPenalty(finding) {
+  return (
+    (IMPACT_WEIGHTS[finding?.impact] ?? 5) *
+    occurrenceMultiplier(finding?.occurrences)
+  );
+}
+
+/** Identificador da regra do axe-core ("image-alt · WCAG…" → "image-alt"). */
+export function ruleIdOf(finding) {
+  return String(finding?.rule || "").split("·")[0].trim();
+}
+
+function autoScoreFrom(findings) {
+  const penalty = findings.reduce((sum, f) => sum + findingPenalty(f), 0);
+  return Math.max(0, Math.min(100, Math.round(100 - penalty)));
+}
+
+/**
+ * Plano de correção: quanto o índice automático subiria se as regras
+ * marcadas como corrigidas deixassem de falhar. É uma projeção — o índice
+ * oficial só muda com uma nova análise.
+ */
+export function projectFixPlan(findings, fixedRules = []) {
+  const fixed = new Set(fixedRules);
+  const list = Array.isArray(findings) ? findings : [];
+  const remaining = list.filter((f) => !fixed.has(ruleIdOf(f)));
+  const current = autoScoreFrom(list);
+  const projected = autoScoreFrom(remaining);
+  return {
+    current,
+    projected,
+    gain: projected - current,
+    fixedCount: list.length - remaining.length,
+    total: list.length
+  };
+}
+
+/** Ganho no índice ao corrigir só este achado (com os demais como estão). */
+export function findingGain(findings, finding) {
+  const list = Array.isArray(findings) ? findings : [];
+  const others = list.filter((f) => f !== finding);
+  return autoScoreFrom(others) - autoScoreFrom(list);
+}
+
 export function occurrenceMultiplier(occurrences) {
   const n = Number(occurrences);
   if (!Number.isFinite(n) || n <= 1) return 1;
@@ -674,9 +750,7 @@ export function computeAccessibilityMetrics(active) {
     if (finding.impact in severityCounts) {
       severityCounts[finding.impact] += 1;
     }
-    penalty +=
-      (IMPACT_WEIGHTS[finding.impact] ?? 5) *
-      occurrenceMultiplier(finding.occurrences);
+    penalty += findingPenalty(finding);
   }
 
   const autoScore = incomplete
@@ -749,6 +823,7 @@ export function parseRoute(hash) {
   if (parts.length === 0) return { page: "new" };
   if (parts[0] === "historico" && parts.length === 1) return { page: "history" };
   if (parts[0] === "ajuda" && parts.length === 1) return { page: "help" };
+  if (parts[0] === "boas-vindas" && parts.length === 1) return { page: "welcome" };
   if (parts[0] === "avaliacao" && parts[1] && parts.length <= 3) {
     const page = EVALUATION_PAGES[parts[2] ?? ""];
     if (page) return { page, id: parts[1] };
@@ -765,6 +840,8 @@ export function routeFor(page, id) {
       return "#/historico";
     case "help":
       return "#/ajuda";
+    case "welcome":
+      return "#/boas-vindas";
     case "results":
     case "checklist":
     case "report": {

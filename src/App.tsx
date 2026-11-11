@@ -12,33 +12,18 @@ import {
   validateTargetUrl
 } from "./evaluation.mjs";
 
+import { BrandMark, Icon } from "./components/icons.tsx";
+import {
+  AffectedElements,
+  FindingsGuide
+} from "./components/FindingsGuide.tsx";
+import { ManualInspection } from "./components/ManualInspection.tsx";
+import { Welcome, shouldShowWelcomeOnOpen } from "./components/Welcome.tsx";
+import type { Finding, RecordItem } from "./types.ts";
+
+export type { Finding, RecordItem } from "./types.ts";
+
 const NOTE_SAVE_DELAY = 600;
-
-export type Finding = {
-  title: string;
-  impact: string;
-  rule: string;
-  element: string;
-  evidence: string;
-  fix: string;
-  helpUrl?: string;
-  occurrences?: number;
-  elements?: { html: string; target?: string }[];
-};
-
-export type RecordItem = {
-  id: string;
-  url: string;
-  date: string;
-  scenario: string;
-  source?: "real" | "simulation";
-  findings?: Finding[];
-  needsReview?: Finding[];
-  engine?: string;
-  failureReason?: string;
-  checklistSize?: number;
-  answers: { [key: number]: { value: string; note: string } };
-};
 
 const metaEnv = (import.meta as { env?: { VITE_API_BASE_URL?: string } }).env;
 const API_BASE_URL = (metaEnv?.VITE_API_BASE_URL || "").replace(/\/$/, "");
@@ -50,133 +35,13 @@ const PAGE_TITLES: Record<string, string> = {
   checklist: "Inspeção manual",
   report: "Relatório da avaliação",
   history: "Histórico de avaliações",
-  help: "Ajuda e acessibilidade"
+  help: "Ajuda e acessibilidade",
+  welcome: "Boas-vindas"
 };
-
-const ICON_PATHS: Record<string, string> = {
-  new: "M12 5v14M5 12h14",
-  history: "M12 7.5V12l3 2M20.5 12a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0z",
-  help: "M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01M20.5 12a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0z",
-  structure: "M4 6h16M4 12h10M4 18h13",
-  forms: "M3 7a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1zM8 14h8",
-  image: "M4 5h16v14H4zM21 16l-5-5-9 9M8.5 9.5h.01",
-  check: "M5 12.5l4.5 4.5L19 7.5",
-  cross: "M7 7l10 10M17 7L7 17",
-  close: "M7 7l10 10M17 7L7 17",
-  arrow: "M5 12h14M13 6l6 6-6 6",
-  print: "M7 9V3h10v6M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M7 14h10v7H7z",
-  info: "M12 11v6M12 7.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"
-};
-
-function Icon({ name, size = 20 }: { name: string; size?: number }) {
-  return (
-    <svg
-      className="icon"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        d={ICON_PATHS[name]}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function BrandMark() {
-  return (
-    <svg
-      className="brand-mark"
-      width="32"
-      height="32"
-      viewBox="0 0 32 32"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <rect x="1" y="1" width="30" height="30" rx="9" fill="#1E56CF" />
-      <path
-        d="M9 16.5l4.5 4.5L23 11.5"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="25" cy="7" r="3" fill="#2BD08F" />
-    </svg>
-  );
-}
-
-/** Classe de cor por gravidade (faixa lateral e selo). */
-function severityClass(impact: string) {
-  return (
-    {
-      Crítico: "sev-critical",
-      Sério: "sev-serious",
-      Moderado: "sev-moderate",
-      Leve: "sev-minor"
-    }[impact] || "sev-minor"
-  );
-}
 
 /** Avisos de falha ficam até serem fechados; os demais somem sozinhos. */
 function isErrorNotice(text: string) {
   return /^Não foi possível|não encontrada/i.test(text);
-}
-
-function AffectedElements({ finding }: { finding: Finding }) {
-  const elements =
-    finding.elements && finding.elements.length
-      ? finding.elements
-      : [{ html: finding.element }];
-  const total = Math.max(finding.occurrences ?? 1, elements.length);
-  const hidden = total - elements.length;
-
-  if (total <= 1) {
-    return (
-      <>
-        <dt>Elemento</dt>
-        <dd>
-          <code>{elements[0].html}</code>
-          {elements[0].target && (
-            <small className="element-target">
-              Seletor: {elements[0].target}
-            </small>
-          )}
-        </dd>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <dt>Elementos afetados ({total})</dt>
-      <dd>
-        <ul className="element-list">
-          {elements.map((el, i) => (
-            <li key={i}>
-              <code>{el.html}</code>
-              {el.target && (
-                <small className="element-target">Seletor: {el.target}</small>
-              )}
-            </li>
-          ))}
-        </ul>
-        {hidden > 0 && (
-          <small>
-            {`E mais ${hidden} ${hidden === 1 ? "elemento" : "elementos"} com o mesmo problema.`}
-          </small>
-        )}
-      </dd>
-    </>
-  );
 }
 
 export function App() {
@@ -187,13 +52,10 @@ export function App() {
   const [notice, setNotice] = useState("");
   const [records, setRecords] = useState<RecordItem[]>([]);
   const [active, setActive] = useState<RecordItem | null>(null);
-  const [filter, setFilter] = useState("Todos");
-  const [checklistFilter, setChecklistFilter] = useState("Todos");
   const [reportManualFilter, setReportManualFilter] = useState("Todos");
   const [chartView, setChartView] = useState<"overall" | "auto" | "manual">(
     "overall"
   );
-  const [expandAllFindings, setExpandAllFindings] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const heading = useRef<HTMLHeadingElement>(null);
@@ -251,10 +113,7 @@ export function App() {
     flushPendingSave();
     if (record !== active) setActive(record);
     setPage(nextPage);
-    setFilter("Todos");
-    setChecklistFilter("Todos");
     setReportManualFilter("Todos");
-    setExpandAllFindings(false);
     setError("");
     setNotice("");
 
@@ -297,7 +156,13 @@ export function App() {
     recordsRef.current = initial.records;
     // Abre a tela indicada no endereço (recarregar ou link direto).
     const route = parseRoute(window.location.hash);
+    const atRoot = ["", "#"].includes(window.location.hash);
     if (route && route.page !== "new") applyRoute(route);
+    else if (atRoot && shouldShowWelcomeOnOpen()) {
+      // Ao abrir o app na raiz, mostra as boas-vindas.
+      go("welcome", null, { push: false });
+      window.history.replaceState(null, "", "#/boas-vindas");
+    }
     if (initial.notice) setNotice(initial.notice);
 
     const handlePop = () => onPopState.current();
@@ -325,7 +190,9 @@ export function App() {
     document.title =
       page === "new"
         ? "AcessoClaro | MVP de acessibilidade web"
-        : `${PAGE_TITLES[page]} | AcessoClaro`;
+        : page === "welcome"
+          ? "AcessoClaro | Boas-vindas à avaliação de acessibilidade"
+          : `${PAGE_TITLES[page]} | AcessoClaro`;
   }, [page]);
 
   function save(nextRecords: RecordItem[], successNotice = "") {
@@ -335,11 +202,15 @@ export function App() {
     return commitRecords(nextRecords, successNotice);
   }
 
-  async function start(e: React.FormEvent) {
+  function start(e: React.FormEvent) {
     e.preventDefault();
+    startEvaluation(url);
+  }
+
+  async function startEvaluation(rawUrl: string) {
     setError("");
 
-    const validation = validateTargetUrl(url);
+    const validation = validateTargetUrl(rawUrl);
     if (!validation.ok || !validation.href) {
       setError(
         validation.error ||
@@ -437,7 +308,8 @@ export function App() {
     setActive(updated);
 
     if (!deferSave) {
-      save(nextRecords, "Respostas salvas neste navegador.");
+      // A resposta marcada já aparece na tela; aviso só se a gravação falhar.
+      save(nextRecords);
       return;
     }
 
@@ -460,14 +332,32 @@ export function App() {
     save(next, "Avaliação removida do histórico deste navegador.");
   }
 
-  async function copyFindingGuidance(f: Finding) {
-    const text = `${f.title} (${f.impact})\nRegra: ${f.rule}\nElemento: ${f.element}\nComo corrigir: ${f.fix}`;
+  async function copyText(text: string, message: string) {
     try {
       await navigator.clipboard.writeText(text);
-      setNotice(`Orientação de "${f.title}" copiada para a área de transferência.`);
+      setNotice(message);
     } catch {
       setNotice("Não foi possível copiar automaticamente neste navegador.");
     }
+  }
+
+  function toggleFix(ruleId: string) {
+    if (!active) return;
+    const current = active.fixPlan || [];
+    const marking = !current.includes(ruleId);
+    const updated: RecordItem = {
+      ...active,
+      fixPlan: marking
+        ? [...current, ruleId]
+        : current.filter((id) => id !== ruleId)
+    };
+    setActive(updated);
+    save(
+      records.map((r) => (r.id === updated.id ? updated : r)),
+      marking
+        ? "Marcado como corrigido no plano de correção."
+        : "Removido do plano de correção."
+    );
   }
 
   const { incomplete, data, review, count, pending, reason, availableFilters } =
@@ -475,9 +365,6 @@ export function App() {
   const metrics = computeAccessibilityMetrics(active);
   const checklist = checklistFor(active);
 
-  const filteredData = data.filter(
-    (f: Finding) => filter === "Todos" || f.impact === filter
-  );
 
   const displayedChartScore =
     chartView === "auto"
@@ -528,11 +415,11 @@ export function App() {
         <div className="topbar-inner">
           <a
             className="brand"
-            href="#/"
-            aria-label="AcessoClaro: iniciar nova avaliação"
+            href="#/boas-vindas"
+            aria-label="AcessoClaro: página inicial"
             onClick={(e) => {
               e.preventDefault();
-              if (page !== "loading") go("new");
+              if (page !== "loading") go("welcome");
             }}
           ><BrandMark />AcessoClaro</a>
           <nav aria-label="Navegação principal" className="main-nav">
@@ -571,6 +458,7 @@ export function App() {
       </header>
       <div className="shell">
         <main id="main" tabIndex={-1}>
+          {page !== "welcome" && (
           <nav
             className={"stepper" + (step < 0 ? " stepper-idle" : "")}
             aria-label="Etapas da avaliação"
@@ -610,13 +498,29 @@ export function App() {
               )}
             </ol>
           </nav>
+          )}
           <div className="page" key={page}>
-          <div className="eyebrow">
-            {step >= 0 ? `ETAPA ${step + 1} DE 4` : "ACESSOCLARO"}
-          </div>
-          <h1 ref={heading} tabIndex={-1}>
-            {PAGE_TITLES[page]}
-          </h1>
+          {page === "welcome" ? (
+            <Welcome
+              headingRef={heading}
+              historyCount={records.length}
+              onQuickStart={(target) => {
+                setUrl(target);
+                startEvaluation(target);
+              }}
+              onGoNew={() => go("new")}
+              onGoHistory={() => go("history")}
+            />
+          ) : (
+            <>
+              <div className="eyebrow">
+                {step >= 0 ? `ETAPA ${step + 1} DE 4` : "ACESSOCLARO"}
+              </div>
+              <h1 ref={heading} tabIndex={-1}>
+                {PAGE_TITLES[page]}
+              </h1>
+            </>
+          )}
 
           {page === "new" && (
             <div className="columns">
@@ -828,134 +732,15 @@ export function App() {
                     </button>
                   </div>
                 ) : (
-                  <>
-                    <div className="results-toolbar">
-                      <div
-                        className="filters"
-                        role="group"
-                        aria-label="Filtrar achados por gravidade"
-                      >
-                        {availableFilters.map((f) => (
-                          <button
-                            key={f}
-                            aria-pressed={filter === f}
-                            onClick={() => setFilter(f)}
-                          >
-                            {f}
-                          </button>
-                        ))}
-                      </div>
-                      {filteredData.length > 1 && (
-                        <button
-                          type="button"
-                          className="secondary compact-btn"
-                          onClick={() => setExpandAllFindings((prev) => !prev)}
-                        >
-                          {expandAllFindings
-                            ? "Recolher detalhes"
-                            : "Expandir todos"}
-                        </button>
-                      )}
-                    </div>
-                    <h2>Achados automáticos ({data.length})</h2>
-                    <p>
-                      {active.source === "real"
-                        ? "Resultados produzidos automaticamente pelo axe-core."
-                        : "Exemplos fictícios para demonstrar a interpretação dos resultados."}
-                    </p>
-                    {filteredData.map((f: Finding, i: number) => (
-                      <details
-                        key={`${f.rule}-${i}`}
-                        open={expandAllFindings || i === 0}
-                        className={"finding " + severityClass(f.impact)}
-                      >
-                        <summary>
-                          <span className="finding-title">{f.title}</span>{" "}
-                          <span
-                            className={
-                              "badge " +
-                              (f.impact === "Crítico"
-                                ? "danger"
-                                : f.impact === "Sério"
-                                  ? "warning"
-                                  : "neutral")
-                            }
-                          >
-                            {f.impact}
-                          </span>
-                        </summary>
-                        <dl>
-                          <dt>Regra</dt>
-                          <dd>{f.rule}</dd>
-                          <AffectedElements finding={f} />
-                          <dt>Evidência</dt>
-                          <dd>{f.evidence}</dd>
-                          <dt>Como corrigir</dt>
-                          <dd>{f.fix}</dd>
-                          <dt>Origem</dt>
-                          <dd>
-                            {active.source === "real"
-                              ? "Automática (axe-core)"
-                              : "Automática (simulada)"}
-                          </dd>
-                        </dl>
-                        <div className="finding-actions">
-                          <button
-                            type="button"
-                            className="secondary compact-btn"
-                            onClick={() => copyFindingGuidance(f)}
-                          >
-                            Copiar orientação
-                          </button>
-                        </div>
-                      </details>
-                    ))}
-                    {!filteredData.length && (
-                      <div className="empty">
-                        <h3>Nenhum achado neste filtro</h3>
-                        <p>
-                          A ausência de achados automáticos não comprova
-                          acessibilidade integral. Continue com a inspeção
-                          manual.
-                        </p>
-                      </div>
-                    )}
-                    {review.length > 0 && (
-                      <section
-                        className="needs-review"
-                        aria-labelledby="needs-review-title"
-                      >
-                        <h2 id="needs-review-title">
-                          Para conferir manualmente ({review.length})
-                        </h2>
-                        <p>
-                          O axe-core encontrou estes pontos, mas não conseguiu
-                          decidir sozinho se há problema. Confira cada um na
-                          página original. Eles não entram no índice.
-                        </p>
-                        {review.map((f: Finding, i: number) => (
-                          <details
-                            key={`review-${f.rule}-${i}`}
-                            className="finding sev-review"
-                          >
-                            <summary>
-                              <span className="finding-title">{f.title}</span>{" "}
-                              <span className="badge neutral">Revisar</span>
-                            </summary>
-                            <dl>
-                              <dt>Regra</dt>
-                              <dd>{f.rule}</dd>
-                              <AffectedElements finding={f} />
-                              <dt>O que verificar</dt>
-                              <dd>{f.evidence}</dd>
-                              <dt>Orientação</dt>
-                              <dd>{f.fix}</dd>
-                            </dl>
-                          </details>
-                        ))}
-                      </section>
-                    )}
-                  </>
+                  <FindingsGuide
+                    findings={data}
+                    review={review}
+                    availableFilters={availableFilters}
+                    source={active.source}
+                    fixPlan={active.fixPlan || []}
+                    onToggleFix={toggleFix}
+                    onCopy={copyText}
+                  />
                 )}
               </section>
               <aside>
@@ -1013,116 +798,14 @@ export function App() {
           )}
 
           {page === "checklist" && active && (
-            <section>
-              <p className="lead">
-                Revise cada item na página original e registre o que observou.
-                As respostas atualizam em tempo real o índice de acessibilidade
-                e são salvas neste navegador.
-              </p>
-              <div className="checklist-live-bar">
-                <div>
-                  <strong>
-                    {`${count} de ${checklist.length} ${count === 1 ? "item revisado" : "itens revisados"}`}
-                  </strong>
-                  <small>
-                    {metrics.manualScoreAvailable
-                      ? `Conformidade entre itens aplicáveis revisados: ${metrics.manualScore}%`
-                      : "Conformidade manual ainda não calculada"}
-                    {` · ${metrics.isProvisional ? "Índice automático provisório" : "Índice geral estimado"}: ${metrics.overallScore}%`}
-                  </small>
-                </div>
-                <div
-                  className="filters"
-                  role="group"
-                  aria-label="Filtrar itens do checklist"
-                >
-                  {["Todos", "Pendentes", "Revisados"].map((mode) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      aria-pressed={checklistFilter === mode}
-                      onClick={() => setChecklistFilter(mode)}
-                    >
-                      {mode}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {checklist.map((item, i) => {
-                const q = item.question;
-                const currentVal = active.answers[i]?.value || "Não verificado";
-                const isPending = currentVal === "Não verificado";
-                if (checklistFilter === "Pendentes" && !isPending) return null;
-                if (checklistFilter === "Revisados" && isPending) return null;
-                return (
-                  <fieldset
-                    key={q}
-                    aria-describedby={"howto" + i}
-                    data-status={currentVal}
-                  >
-                    <legend>
-                      <span
-                        className="status-seal"
-                        key={currentVal}
-                        aria-hidden="true"
-                      >
-                        {currentVal === "Atende" ? (
-                          <Icon name="check" size={14} />
-                        ) : currentVal === "Não atende" ? (
-                          <Icon name="cross" size={14} />
-                        ) : currentVal === "Não se aplica" ? (
-                          "–"
-                        ) : (
-                          i + 1
-                        )}
-                      </span>
-                      <span>
-                        {i + 1}. {q}
-                      </span>
-                    </legend>
-                    <p className="criterion-hint" id={"howto" + i}>
-                      <span className="badge neutral">{item.criterion}</span>
-                      <span>
-                        <strong>Como verificar:</strong> {item.howTo}
-                      </span>
-                    </p>
-                    <div className="radios">
-                      {[
-                        "Atende",
-                        "Não atende",
-                        "Não se aplica",
-                        "Não verificado"
-                      ].map((v) => (
-                        <label key={v} data-value={v}>
-                          <input
-                            type="radio"
-                            name={"q" + i}
-                            checked={currentVal === v}
-                            onChange={() =>
-                              answer(i, v, active.answers[i]?.note || "")
-                            }
-                          />
-                          {v}
-                        </label>
-                      ))}
-                    </div>
-                    <label htmlFor={"note" + i}>Observação ou evidência</label>
-                    <textarea
-                      id={"note" + i}
-                      value={active.answers[i]?.note || ""}
-                      onChange={(e) =>
-                        answer(i, currentVal, e.target.value, {
-                          deferSave: true
-                        })
-                      }
-                    />
-                  </fieldset>
-                );
-              })}
-              <button className="primary" onClick={() => go("report")}>
-                Revisar relatório
-              </button>
-            </section>
+            <ManualInspection
+              checklist={checklist}
+              answers={active.answers}
+              metrics={metrics}
+              url={active.url}
+              onAnswer={answer}
+              onGoReport={() => go("report")}
+            />
           )}
 
           {page === "history" && (
