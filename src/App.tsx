@@ -57,6 +57,7 @@ export function App() {
     "overall"
   );
   const [progress, setProgress] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
 
   const heading = useRef<HTMLHeadingElement>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -177,6 +178,18 @@ export function App() {
       analysisController.current?.abort();
     };
   }, []);
+
+  // Relógio da análise real: mostra que o trabalho continua em portais lentos.
+  useEffect(() => {
+    if (page !== "loading" || !API_BASE_URL) return;
+    setElapsed(0);
+    const startedAt = Date.now();
+    const tick = setInterval(
+      () => setElapsed(Math.round((Date.now() - startedAt) / 1000)),
+      1000
+    );
+    return () => clearInterval(tick);
+  }, [page]);
 
   useEffect(() => {
     if (!notice || isErrorNotice(notice)) return;
@@ -668,6 +681,17 @@ export function App() {
                       "Concluído"
                     ][progress]}
               </p>
+              {API_BASE_URL && (
+                <p className="elapsed">
+                  <strong>
+                    {elapsed} s
+                  </strong>{" "}
+                  decorridos.{" "}
+                  {elapsed < 20
+                    ? "Páginas simples levam alguns segundos."
+                    : "Portais grandes podem levar até 1 minuto e meio — a análise continua."}
+                </p>
+              )}
               <p>
                 {API_BASE_URL
                   ? "A página é processada somente para produzir esta avaliação."

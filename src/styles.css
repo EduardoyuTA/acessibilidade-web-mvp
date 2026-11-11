@@ -2010,3 +2010,13 @@ fieldset > label {
     margin: 18mm;
   }
 }
+
+/* Relógio da análise real */
+.elapsed {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+.elapsed strong {
+  color: var(--ink);
+}

@@ -201,3 +201,17 @@ test("conta o limite separadamente para cada IP", async () => {
   assert.equal((await from("203.0.113.1")).status, 429);
   assert.equal((await from("203.0.113.2")).status, 200);
 });
+
+test("no tempo esgotado diz em que etapa a análise parou", async () => {
+  const app = createApp({
+    timeoutMs: 30,
+    abortGraceMs: 10,
+    analyze: (_url, { onPhase }) => {
+      onPhase("carregando a página");
+      return new Promise(() => {});
+    }
+  });
+  const res = await post(app);
+  assert.equal(res.status, 504);
+  assert.match(res.body.error, /tempo máximo de 0 s \(etapa: carregando a página\)/);
+});

@@ -12,7 +12,9 @@ function numberFromEnv(name, fallback) {
 
 export function createApp({
   analyze = analyzePage,
-  timeoutMs = 50_000,
+  // Servidores pequenos (ex.: plano gratuito do Render) levam bem mais tempo
+  // que uma máquina local em portais pesados.
+  timeoutMs = numberFromEnv("ANALYSIS_TIMEOUT_MS", 90_000),
   // Depois de pedir o cancelamento, quanto esperar a análise encerrar antes de
   // liberar a vaga mesmo assim (proteção contra um navegador travado).
   abortGraceMs = 10_000,
@@ -69,8 +71,14 @@ export function createApp({
 
     activeAnalyses += 1;
     const controller = new AbortController();
+    let currentPhase = "iniciando";
     const task = Promise.resolve().then(() =>
-      analyze(request.body?.url, { signal: controller.signal })
+      analyze(request.body?.url, {
+        signal: controller.signal,
+        onPhase: (name) => {
+          currentPhase = name;
+        }
+      })
     );
 
     // A vaga só é liberada quando a análise realmente termina (ou, se ela não
@@ -111,9 +119,14 @@ export function createApp({
       response.json(result);
     } catch (error) {
       if (response.destroyed) return;
-      const message = error instanceof Error ? error.message : "Não foi possível concluir a análise.";
-      const clientError = /URL|HTTP|HTTPS|porta|endereço|rede privada|reservada|credenciais/i.test(message);
-      const status = message === TIMEOUT_MESSAGE ? 504 : clientError ? 400 : 502;
+      const raw = error instanceof Error ? error.message : "Não foi possível concluir a análise.";
+      const timedOut = raw === TIMEOUT_MESSAGE;
+      const message = timedOut
+        ? `A análise excedeu o tempo máximo de ${Math.round(timeoutMs / 1000)} s (etapa: ${currentPhase}).`
+        : raw;
+      if (timedOut) console.warn("[análise] tempo esgotado na etapa:", currentPhase);
+      const clientError = /URL|HTTP|HTTPS|porta|endereço|rede privada|reservada|credenciais/i.test(raw);
+      const status = timedOut ? 504 : clientError ? 400 : 502;
       response.status(status).json({ error: message });
     } finally {
       clearTimeout(timeout);

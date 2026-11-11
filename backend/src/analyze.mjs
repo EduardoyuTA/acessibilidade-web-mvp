@@ -179,9 +179,25 @@ function throwIfAborted(signal) {
   }
 }
 
-export async function analyzePage(rawUrl, { signal } = {}) {
+/**
+ * Analisa a página. `onPhase` recebe o nome de cada etapa ao começar, para a
+ * API dizer onde parou se o tempo acabar; o resultado traz o tempo de cada uma.
+ */
+export async function analyzePage(rawUrl, { signal, onPhase = () => {} } = {}) {
+  const startedAt = Date.now();
+  const timings = {};
+  let phaseStart = startedAt;
+  const phase = (name, key) => {
+    const now = Date.now();
+    if (key) timings[key] = now - phaseStart;
+    phaseStart = now;
+    if (name) onPhase(name);
+  };
+
+  onPhase("validando o endereço");
   const target = await validatePublicUrl(rawUrl);
   throwIfAborted(signal);
+  phase("abrindo o navegador", "validacao");
   const browser = await getBrowser();
   let context;
   // Fechar o contexto interrompe navegação e axe-core em andamento.
@@ -203,6 +219,7 @@ export async function analyzePage(rawUrl, { signal } = {}) {
     await page.route("**/*", createRequestGuard());
     // O cancelamento pode ter chegado enquanto o contexto era criado.
     throwIfAborted(signal);
+    phase("carregando a página", "navegador");
 
     let response = null;
     try {
@@ -237,10 +254,21 @@ export async function analyzePage(rawUrl, { signal } = {}) {
         : target;
 
     throwIfAborted(signal);
+    phase("executando o axe-core", "pagina");
+    // Só o documento principal: o conteúdo de iframes (widgets, vídeos) não é
+    // carregado e analisá-los custaria muito tempo em servidores pequenos.
     const results = await new AxeBuilder({
       page,
       axeSource: AXE_PT_SOURCE
-    }).analyze();
+    })
+      .options({ iframes: false })
+      .analyze();
+    phase(null, "axe");
+    timings.total = Date.now() - startedAt;
+    console.log(
+      "[análise]",
+      JSON.stringify({ host: finalUrl.hostname, ...timings })
+    );
 
     return {
       url: finalUrl.href,
@@ -249,6 +277,7 @@ export async function analyzePage(rawUrl, { signal } = {}) {
       findings: results.violations.map(summarize),
       passes: results.passes.length,
       incomplete: results.incomplete.length,
+      timings,
       // Regras que o axe-core não conseguiu decidir sozinho (ex.: contraste
       // sobre imagem). Não entram no índice: exigem conferência humana.
       needsReview: results.incomplete.slice(0, MAX_REVIEW_ITEMS).map(summarize),
