@@ -53,6 +53,84 @@ const PAGE_TITLES: Record<string, string> = {
   help: "Ajuda e acessibilidade"
 };
 
+const ICON_PATHS: Record<string, string> = {
+  new: "M12 5v14M5 12h14",
+  history: "M12 7.5V12l3 2M20.5 12a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0z",
+  help: "M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01M20.5 12a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0z",
+  structure: "M4 6h16M4 12h10M4 18h13",
+  forms: "M3 7a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1zM8 14h8",
+  image: "M4 5h16v14H4zM21 16l-5-5-9 9M8.5 9.5h.01",
+  check: "M5 12.5l4.5 4.5L19 7.5",
+  cross: "M7 7l10 10M17 7L7 17",
+  close: "M7 7l10 10M17 7L7 17",
+  arrow: "M5 12h14M13 6l6 6-6 6",
+  print: "M7 9V3h10v6M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M7 14h10v7H7z",
+  info: "M12 11v6M12 7.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"
+};
+
+function Icon({ name, size = 20 }: { name: string; size?: number }) {
+  return (
+    <svg
+      className="icon"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d={ICON_PATHS[name]}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function BrandMark() {
+  return (
+    <svg
+      className="brand-mark"
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect x="1" y="1" width="30" height="30" rx="9" fill="#1E56CF" />
+      <path
+        d="M9 16.5l4.5 4.5L23 11.5"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="25" cy="7" r="3" fill="#2BD08F" />
+    </svg>
+  );
+}
+
+/** Classe de cor por gravidade (faixa lateral e selo). */
+function severityClass(impact: string) {
+  return (
+    {
+      Crítico: "sev-critical",
+      Sério: "sev-serious",
+      Moderado: "sev-moderate",
+      Leve: "sev-minor"
+    }[impact] || "sev-minor"
+  );
+}
+
+/** Avisos de falha ficam até serem fechados; os demais somem sozinhos. */
+function isErrorNotice(text: string) {
+  return /^Não foi possível|não encontrada/i.test(text);
+}
+
 function AffectedElements({ finding }: { finding: Finding }) {
   const elements =
     finding.elements && finding.elements.length
@@ -234,6 +312,12 @@ export function App() {
       analysisController.current?.abort();
     };
   }, []);
+
+  useEffect(() => {
+    if (!notice || isErrorNotice(notice)) return;
+    const hide = setTimeout(() => setNotice(""), 5000);
+    return () => clearTimeout(hide);
+  }, [notice]);
 
   useEffect(() => {
     heading.current?.focus();
@@ -440,91 +524,99 @@ export function App() {
       >
         Ir para o conteúdo
       </a>
-      <header>
-        <a
-          className="brand"
-          href="#"
-          aria-label="AcessoClaro: iniciar nova avaliação"
-          onClick={(e) => {
-            e.preventDefault();
-            if (page !== "loading") go("new");
-          }}
-        >AcessoClaro</a>
-        <nav aria-label="Navegação principal">
-          {[
-            ["new", "Nova avaliação"],
-            ["history", "Histórico"],
-            ["help", "Ajuda e acessibilidade"]
-          ].map(([p, label]) => (
-            <button
-              key={p}
-              disabled={page === "loading"}
-              aria-current={page === p ? "page" : undefined}
-              onClick={() => go(p)}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
-      </header>
-      <div className="shell">
-        <aside className="steps" aria-label="Etapas da avaliação">
-          <ol>
-            {["URL", "Análise automática", "Inspeção manual", "Relatório"].map(
-              (s, i) => (
-                <li key={s}>
-                  <button
-                    disabled={page === "loading" || (i > 0 && !active)}
-                    aria-current={step === i ? "step" : undefined}
-                    onClick={() =>
-                      go(["new", "results", "checklist", "report"][i])
-                    }
-                  >
-                    <span className="number" aria-hidden="true">
-                      {i + 1}
-                    </span>
-                    <span>
-                      <strong>{s}</strong>
-                      <small>
-                        {
-                          [
-                            "Informar página",
-                            "Interpretar achados",
-                            "Complementar análise",
-                            "Reunir resultados"
-                          ][i]
-                        }
-                      </small>
-                    </span>
-                  </button>
-                </li>
-              )
-            )}
-          </ol>
-          <p className="rail-note">
-            Da URL ao relatório: automação e julgamento humano no mesmo percurso.
-          </p>
-          <small>Projeto acadêmico · 2026</small>
-        </aside>
-        <main id="main" tabIndex={-1}>
-          <div className="eyebrow">
-            {step >= 0 ? `ETAPA ${step + 1} DE 4` : "ACESSOCLARO"}
-            <span>
+      <header className="topbar">
+        <div className="topbar-inner">
+          <a
+            className="brand"
+            href="#/"
+            aria-label="AcessoClaro: iniciar nova avaliação"
+            onClick={(e) => {
+              e.preventDefault();
+              if (page !== "loading") go("new");
+            }}
+          ><BrandMark />AcessoClaro</a>
+          <nav aria-label="Navegação principal" className="main-nav">
+            {[
+              ["new", "Nova avaliação", "Nova"],
+              ["history", "Histórico", "Histórico"],
+              ["help", "Ajuda e acessibilidade", "Ajuda"]
+            ].map(([p, label, short]) => (
+              <button
+                key={p}
+                type="button"
+                disabled={page === "loading"}
+                aria-current={page === p ? "page" : undefined}
+                onClick={() => go(p)}
+              >
+                <Icon name={p} size={22} />
+                <span className="label-long">{label}</span>
+                <span className="label-short" aria-hidden="true">
+                  {short}
+                </span>
+              </button>
+            ))}
+          </nav>
+          <span className={"mode-badge " + (API_BASE_URL ? "live" : "demo")}>
+            <span className="mode-dot" aria-hidden="true" />
+            <span className="label-long">
               {API_BASE_URL
                 ? "MVP · análise automática real"
                 : "Protótipo · dados simulados"}
             </span>
+            <span className="label-short">
+              {API_BASE_URL ? "Análise real" : "Simulado"}
+            </span>
+          </span>
+        </div>
+      </header>
+      <div className="shell">
+        <main id="main" tabIndex={-1}>
+          <nav
+            className={"stepper" + (step < 0 ? " stepper-idle" : "")}
+            aria-label="Etapas da avaliação"
+          >
+            <ol>
+              {["URL", "Análise automática", "Inspeção manual", "Relatório"].map(
+                (s, i) => (
+                  <li key={s}>
+                    <button
+                      type="button"
+                      disabled={page === "loading" || (i > 0 && !active)}
+                      aria-current={step === i ? "step" : undefined}
+                      className={step > i ? "done" : undefined}
+                      onClick={() =>
+                        go(["new", "results", "checklist", "report"][i])
+                      }
+                    >
+                      <span className="number" aria-hidden="true">
+                        {step > i ? <Icon name="check" size={16} /> : i + 1}
+                      </span>
+                      <span className="step-text">
+                        <strong>{s}</strong>
+                        <small>
+                          {
+                            [
+                              "Informar página",
+                              "Interpretar achados",
+                              "Complementar análise",
+                              "Reunir resultados"
+                            ][i]
+                          }
+                        </small>
+                      </span>
+                    </button>
+                  </li>
+                )
+              )}
+            </ol>
+          </nav>
+          <div className="page" key={page}>
+          <div className="eyebrow">
+            {step >= 0 ? `ETAPA ${step + 1} DE 4` : "ACESSOCLARO"}
           </div>
           <h1 ref={heading} tabIndex={-1}>
             {PAGE_TITLES[page]}
           </h1>
-          <div
-            role="status"
-            aria-live="polite"
-            className={notice ? "notice" : ""}
-          >
-            {notice}
-          </div>
 
           {page === "new" && (
             <div className="columns">
@@ -572,7 +664,10 @@ export function App() {
                       </select>
                     </>
                   )}
-                  <button className="primary">Iniciar avaliação</button>
+                  <button className="primary">
+                    Iniciar avaliação
+                    <Icon name="arrow" size={18} />
+                  </button>
                 </form>
                 <section className="explain">
                   <h2>O que será observado</h2>
@@ -594,8 +689,11 @@ export function App() {
                       "Imagens e conteúdo",
                       "Alternativas textuais e contraste, com interpretação do contexto."
                     ]
-                  ].map(([title, desc]) => (
-                    <article key={title}>
+                  ].map(([title, desc], i) => (
+                    <article key={title} className={"explain-card tone-" + i}>
+                      <span className="explain-icon">
+                        <Icon name={["structure", "forms", "image"][i]} size={22} />
+                      </span>
                       <h3>{title}</h3>
                       <p>{desc}</p>
                     </article>
@@ -641,11 +739,21 @@ export function App() {
                 {API_BASE_URL ? "Avaliando" : "Preparando demonstração para"}{" "}
                 {active?.url}
               </p>
-              <progress
-                value={progress}
-                max="3"
-                aria-label="Etapas concluídas"
-              />
+              {API_BASE_URL ? (
+                <div
+                  className="progress-indeterminate"
+                  role="progressbar"
+                  aria-label="Análise em andamento"
+                >
+                  <span />
+                </div>
+              ) : (
+                <progress
+                  value={progress}
+                  max="3"
+                  aria-label="Etapas concluídas"
+                />
+              )}
               <p role="status" aria-live="polite">
                 {API_BASE_URL
                   ? "Validando o destino, abrindo a página e executando o axe-core…"
@@ -759,10 +867,10 @@ export function App() {
                       <details
                         key={`${f.rule}-${i}`}
                         open={expandAllFindings || i === 0}
-                        className="finding"
+                        className={"finding " + severityClass(f.impact)}
                       >
                         <summary>
-                          {f.title}{" "}
+                          <span className="finding-title">{f.title}</span>{" "}
                           <span
                             className={
                               "badge " +
@@ -828,10 +936,10 @@ export function App() {
                         {review.map((f: Finding, i: number) => (
                           <details
                             key={`review-${f.rule}-${i}`}
-                            className="finding"
+                            className="finding sev-review"
                           >
                             <summary>
-                              {f.title}{" "}
+                              <span className="finding-title">{f.title}</span>{" "}
                               <span className="badge neutral">Revisar</span>
                             </summary>
                             <dl>
@@ -947,9 +1055,30 @@ export function App() {
                 if (checklistFilter === "Pendentes" && !isPending) return null;
                 if (checklistFilter === "Revisados" && isPending) return null;
                 return (
-                  <fieldset key={q} aria-describedby={"howto" + i}>
+                  <fieldset
+                    key={q}
+                    aria-describedby={"howto" + i}
+                    data-status={currentVal}
+                  >
                     <legend>
-                      {i + 1}. {q}
+                      <span
+                        className="status-seal"
+                        key={currentVal}
+                        aria-hidden="true"
+                      >
+                        {currentVal === "Atende" ? (
+                          <Icon name="check" size={14} />
+                        ) : currentVal === "Não atende" ? (
+                          <Icon name="cross" size={14} />
+                        ) : currentVal === "Não se aplica" ? (
+                          "–"
+                        ) : (
+                          i + 1
+                        )}
+                      </span>
+                      <span>
+                        {i + 1}. {q}
+                      </span>
                     </legend>
                     <p className="criterion-hint" id={"howto" + i}>
                       <span className="badge neutral">{item.criterion}</span>
@@ -964,7 +1093,7 @@ export function App() {
                         "Não se aplica",
                         "Não verificado"
                       ].map((v) => (
-                        <label key={v}>
+                        <label key={v} data-value={v}>
                           <input
                             type="radio"
                             name={"q" + i}
@@ -1072,6 +1201,7 @@ export function App() {
               </p>
               <div className="print-actions">
                 <button className="primary" onClick={() => window.print()}>
+                  <Icon name="print" size={18} />
                   Imprimir / salvar PDF
                 </button>
                 <button
@@ -1145,6 +1275,9 @@ export function App() {
                       />
                       <circle
                         className={"gauge-fill " + metrics.tone}
+                        style={
+                          { "--circumference": circumference } as React.CSSProperties
+                        }
                         cx="80"
                         cy="80"
                         r={radius}
@@ -1458,7 +1591,33 @@ export function App() {
               ))}
             </section>
           )}
+          </div>
+          <footer className="site-footer">
+            <p>
+              Da URL ao relatório: automação e julgamento humano no mesmo
+              percurso.
+            </p>
+            <small>Projeto acadêmico · 2026</small>
+          </footer>
         </main>
+      </div>
+      <div className="toast-region" role="status" aria-live="polite">
+        {notice && (
+          <div
+            className={"toast" + (isErrorNotice(notice) ? " toast-error" : "")}
+          >
+            <Icon name={isErrorNotice(notice) ? "info" : "check"} size={18} />
+            <span>{notice}</span>
+            <button
+              type="button"
+              className="toast-close"
+              aria-label="Fechar aviso"
+              onClick={() => setNotice("")}
+            >
+              <Icon name="close" size={16} />
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
