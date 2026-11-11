@@ -124,6 +124,20 @@ function cleanPortugueseText(text) {
     .trim();
 }
 
+const MAX_ELEMENTS = 5;
+const MAX_REVIEW_ITEMS = 20;
+
+function describeNode(node) {
+  const target = (node?.target || [])
+    .flat(Infinity)
+    .map(String)
+    .join(" › ");
+  return {
+    html: String(node?.html || "").slice(0, 300),
+    target: target.slice(0, 200)
+  };
+}
+
 function summarize(violation) {
   const first = violation.nodes[0];
   const checkMessages = [
@@ -147,6 +161,7 @@ function summarize(violation) {
     impact: impactNames[violation.impact ?? "null"],
     rule: `${violation.id} · ${violation.tags.filter((tag) => tag.startsWith("wcag")).join(", ") || "axe-core"}`,
     element: first?.html?.slice(0, 500) || "Elemento não informado",
+    elements: violation.nodes.slice(0, MAX_ELEMENTS).map(describeNode),
     evidence,
     fix: description
       ? `${description}. Documentação da regra (${violation.id}): ${violation.helpUrl}`
@@ -234,6 +249,9 @@ export async function analyzePage(rawUrl, { signal } = {}) {
       findings: results.violations.map(summarize),
       passes: results.passes.length,
       incomplete: results.incomplete.length,
+      // Regras que o axe-core não conseguiu decidir sozinho (ex.: contraste
+      // sobre imagem). Não entram no índice: exigem conferência humana.
+      needsReview: results.incomplete.slice(0, MAX_REVIEW_ITEMS).map(summarize),
       disclaimer:
         "A automação cobre apenas parte dos critérios. A inspeção manual continua obrigatória."
     };

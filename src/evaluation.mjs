@@ -31,8 +31,26 @@ export const SIMULATED_FINDINGS = [
     impact: "Sério",
     rule: "color-contrast · WCAG 2.2 / 1.4.3",
     element: '<p class="descricao">',
+    elements: [
+      { html: '<p class="descricao">', target: "main > p.descricao" },
+      { html: '<a class="saiba-mais" href="/sobre">', target: "main > a.saiba-mais" },
+      { html: '<span class="rodape-nota">', target: "footer > span.rodape-nota" }
+    ],
+    occurrences: 3,
     evidence: "Contraste fictício de 2,8:1 no texto comum.",
     fix: "Ajuste as cores para atingir pelo menos 4,5:1 para texto comum."
+  }
+];
+
+export const SIMULATED_REVIEW = [
+  {
+    title: "Contraste de texto sobre imagem de fundo",
+    impact: "Sério",
+    rule: "color-contrast · WCAG 2.2 / 1.4.3",
+    element: '<h2 class="destaque">',
+    evidence: "Exemplo fictício: o texto está sobre uma imagem, e a automação não consegue medir o contraste.",
+    fix: "Confira visualmente se o texto se destaca do fundo em todas as áreas da imagem.",
+    occurrences: 1
   }
 ];
 
@@ -192,7 +210,10 @@ export async function requestAnalysis(
     findings: Array.isArray(payload?.findings)
       ? payload.findings.map(localizeFinding)
       : [],
-    engine: payload?.engine
+    engine: payload?.engine,
+    needsReview: Array.isArray(payload?.needsReview)
+      ? payload.needsReview.map(localizeFinding)
+      : []
   };
 }
 
@@ -464,6 +485,7 @@ export function resolveEvaluationState(active) {
     return {
       incomplete: false,
       data: [],
+      review: [],
       count: 0,
       pending: QUESTIONS.length,
       reason: "",
@@ -477,6 +499,13 @@ export function resolveEvaluationState(active) {
       ? (active.findings || []).map(localizeFinding)
       : active.scenario === "findings"
         ? SIMULATED_FINDINGS
+        : [];
+  const review = incomplete
+    ? []
+    : active.source === "real"
+      ? (active.needsReview || []).map(localizeFinding)
+      : active.scenario === "findings"
+        ? SIMULATED_REVIEW
         : [];
   const count = Object.values(active.answers || {}).filter(
     (a) => a && a.value && a.value !== "Não verificado"
@@ -496,6 +525,7 @@ export function resolveEvaluationState(active) {
   return {
     incomplete,
     data,
+    review,
     count,
     pending,
     reason,
@@ -510,6 +540,17 @@ const IMPACT_WEIGHTS = {
   Leve: 4,
   "Não definido": 5
 };
+
+/**
+ * Peso extra para regras que falham em muitos elementos: 1 ocorrência = 1x,
+ * 10 = 1,5x, 100 ou mais = 2x (teto). Assim um problema espalhado pela página
+ * pesa mais que um caso isolado, sem que uma única regra zere o índice.
+ */
+export function occurrenceMultiplier(occurrences) {
+  const n = Number(occurrences);
+  if (!Number.isFinite(n) || n <= 1) return 1;
+  return Math.min(2, 1 + Math.log10(n) / 2);
+}
 
 export function computeAccessibilityMetrics(active) {
   const { incomplete, data, count, pending } = resolveEvaluationState(active);
@@ -548,10 +589,14 @@ export function computeAccessibilityMetrics(active) {
     if (finding.impact in severityCounts) {
       severityCounts[finding.impact] += 1;
     }
-    penalty += IMPACT_WEIGHTS[finding.impact] ?? 5;
+    penalty +=
+      (IMPACT_WEIGHTS[finding.impact] ?? 5) *
+      occurrenceMultiplier(finding.occurrences);
   }
 
-  const autoScore = incomplete ? 0 : Math.max(0, Math.min(100, 100 - penalty));
+  const autoScore = incomplete
+    ? 0
+    : Math.max(0, Math.min(100, Math.round(100 - penalty)));
 
   const overallScore = incomplete
     ? manualComplete

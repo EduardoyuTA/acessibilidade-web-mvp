@@ -347,3 +347,37 @@ nav button,
     background: white;
   }
 }
+
+/* Elementos afetados e pontos para conferência manual */
+.element-list {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.element-target {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.needs-review {
+  margin-top: 32px;
+  padding-top: 8px;
+  border-top: 2px dashed #dce5ed;
+}
+
+.report-elements {
+  padding: 0 0 6px;
+}
+
+.review-list {
+  padding-left: 20px;
+}
+
+.review-list li {
+  margin-bottom: 6px;
+}

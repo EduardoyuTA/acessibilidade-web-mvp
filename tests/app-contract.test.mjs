@@ -5,6 +5,7 @@ import {
   QUESTIONS,
   STORAGE_KEY,
   computeAccessibilityMetrics,
+  occurrenceMultiplier,
   loadStoredRecords,
   localizeFailureReason,
   localizeFinding,
@@ -262,9 +263,9 @@ test("computes accessibility percentage chart metrics from automatic and manual 
     source: "simulation",
     answers: {}
   });
-  assert.equal(initial.autoScore, 56);
+  assert.equal(initial.autoScore, 53);
   assert.equal(initial.manualScore, 0);
-  assert.equal(initial.overallScore, 56);
+  assert.equal(initial.overallScore, 53);
   assert.equal(initial.manualCoverage, 0);
   assert.equal(initial.manualScoreAvailable, false);
   assert.equal(initial.manualComplete, false);
@@ -281,7 +282,7 @@ test("computes accessibility percentage chart metrics from automatic and manual 
   });
   assert.equal(partial.manualScore, 100);
   assert.equal(partial.manualCoverage, 17);
-  assert.equal(partial.overallScore, 56);
+  assert.equal(partial.overallScore, 53);
   assert.equal(partial.isProvisional, true);
 
   // Empty automatic findings + all 6 manual criteria marked 'Atende' (auto: 100%, manual: 100%, overall: 100%)
@@ -355,3 +356,59 @@ test("translates English axe-core findings and Playwright errors into pt-BR", ()
 });
 
 
+
+test("weights automatic findings by number of affected elements", () => {
+  assert.equal(occurrenceMultiplier(undefined), 1);
+  assert.equal(occurrenceMultiplier(1), 1);
+  assert.equal(occurrenceMultiplier(10), 1.5);
+  assert.equal(occurrenceMultiplier(100), 2);
+  assert.equal(occurrenceMultiplier(5000), 2);
+
+  const withOccurrences = (occurrences) =>
+    computeAccessibilityMetrics({
+      id: "occ",
+      url: "https://example.com/",
+      date: "2026-11-11T12:00:00.000Z",
+      scenario: "findings",
+      source: "real",
+      findings: [{ title: "Contraste", impact: "Sério", rule: "color-contrast", element: "<p>", evidence: "e", fix: "f", occurrences }],
+      answers: {}
+    }).autoScore;
+
+  assert.equal(withOccurrences(1), 88);
+  assert.equal(withOccurrences(10), 82);
+  assert.equal(withOccurrences(200), 76);
+});
+
+test("keeps items that need manual review apart from the score", async () => {
+  const response = new Response(
+    JSON.stringify({
+      url: "https://example.com/",
+      findings: [],
+      needsReview: [{ title: "Revisar contraste", impact: "Sério", rule: "color-contrast", element: "<h2>", evidence: "e", fix: "f" }]
+    }),
+    { status: 200, headers: { "content-type": "application/json" } }
+  );
+  const result = await requestAnalysis("https://api.example.test", "https://example.com/", async () => response);
+  assert.equal(result.needsReview.length, 1);
+
+  const record = {
+    id: "r",
+    url: "https://example.com/",
+    date: "2026-11-11T12:00:00.000Z",
+    scenario: "findings",
+    source: "real",
+    findings: result.findings,
+    needsReview: result.needsReview,
+    answers: {}
+  };
+  assert.equal(resolveEvaluationState(record).review.length, 1);
+  assert.equal(computeAccessibilityMetrics(record).autoScore, 100);
+
+  // Old records saved before this field existed still load.
+  assert.deepEqual(resolveEvaluationState({ ...record, needsReview: undefined }).review, []);
+  // Interrupted evaluations have nothing to review.
+  assert.deepEqual(resolveEvaluationState({ ...record, scenario: "error" }).review, []);
+  // The simulated demo shows an example review item.
+  assert.ok(resolveEvaluationState({ ...record, source: "simulation" }).review.length > 0);
+});

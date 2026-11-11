@@ -18,6 +18,7 @@ export type Finding = {
   fix: string;
   helpUrl?: string;
   occurrences?: number;
+  elements?: { html: string; target?: string }[];
 };
 
 export type RecordItem = {
@@ -27,6 +28,7 @@ export type RecordItem = {
   scenario: string;
   source?: "real" | "simulation";
   findings?: Finding[];
+  needsReview?: Finding[];
   engine?: string;
   failureReason?: string;
   answers: { [key: number]: { value: string; note: string } };
@@ -44,6 +46,54 @@ const PAGE_TITLES: Record<string, string> = {
   history: "Histórico de avaliações",
   help: "Ajuda e acessibilidade"
 };
+
+function AffectedElements({ finding }: { finding: Finding }) {
+  const elements =
+    finding.elements && finding.elements.length
+      ? finding.elements
+      : [{ html: finding.element }];
+  const total = Math.max(finding.occurrences ?? 1, elements.length);
+  const hidden = total - elements.length;
+
+  if (total <= 1) {
+    return (
+      <>
+        <dt>Elemento</dt>
+        <dd>
+          <code>{elements[0].html}</code>
+          {elements[0].target && (
+            <small className="element-target">
+              Seletor: {elements[0].target}
+            </small>
+          )}
+        </dd>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <dt>Elementos afetados ({total})</dt>
+      <dd>
+        <ul className="element-list">
+          {elements.map((el, i) => (
+            <li key={i}>
+              <code>{el.html}</code>
+              {el.target && (
+                <small className="element-target">Seletor: {el.target}</small>
+              )}
+            </li>
+          ))}
+        </ul>
+        {hidden > 0 && (
+          <small>
+            {`E mais ${hidden} ${hidden === 1 ? "elemento" : "elementos"} com o mesmo problema.`}
+          </small>
+        )}
+      </dd>
+    </>
+  );
+}
 
 export function App() {
   const [page, setPage] = useState("new");
@@ -156,6 +206,7 @@ export function App() {
         ...item,
         url: payload.url || item.url,
         findings: payload.findings,
+        needsReview: payload.needsReview,
         engine: payload.engine
       };
       setActive(completed);
@@ -224,7 +275,7 @@ export function App() {
     }
   }
 
-  const { incomplete, data, count, pending, reason, availableFilters } =
+  const { incomplete, data, review, count, pending, reason, availableFilters } =
     resolveEvaluationState(active);
   const metrics = computeAccessibilityMetrics(active);
 
@@ -608,17 +659,7 @@ export function App() {
                         <dl>
                           <dt>Regra</dt>
                           <dd>{f.rule}</dd>
-                          <dt>Elemento</dt>
-                          <dd>
-                            <code>{f.element}</code>
-                          </dd>
-                          {typeof f.occurrences === "number" &&
-                            f.occurrences > 1 && (
-                              <>
-                                <dt>Ocorrências</dt>
-                                <dd>{f.occurrences} elementos afetados</dd>
-                              </>
-                            )}
+                          <AffectedElements finding={f} />
                           <dt>Evidência</dt>
                           <dd>{f.evidence}</dd>
                           <dt>Como corrigir</dt>
@@ -650,6 +691,41 @@ export function App() {
                           manual.
                         </p>
                       </div>
+                    )}
+                    {review.length > 0 && (
+                      <section
+                        className="needs-review"
+                        aria-labelledby="needs-review-title"
+                      >
+                        <h2 id="needs-review-title">
+                          Para conferir manualmente ({review.length})
+                        </h2>
+                        <p>
+                          O axe-core encontrou estes pontos, mas não conseguiu
+                          decidir sozinho se há problema. Confira cada um na
+                          página original. Eles não entram no índice.
+                        </p>
+                        {review.map((f: Finding, i: number) => (
+                          <details
+                            key={`review-${f.rule}-${i}`}
+                            className="finding"
+                          >
+                            <summary>
+                              {f.title}{" "}
+                              <span className="badge neutral">Revisar</span>
+                            </summary>
+                            <dl>
+                              <dt>Regra</dt>
+                              <dd>{f.rule}</dd>
+                              <AffectedElements finding={f} />
+                              <dt>O que verificar</dt>
+                              <dd>{f.evidence}</dd>
+                              <dt>Orientação</dt>
+                              <dd>{f.fix}</dd>
+                            </dl>
+                          </details>
+                        ))}
+                      </section>
                     )}
                   </>
                 )}
@@ -1080,15 +1156,9 @@ export function App() {
                     <p>
                       <strong>Regra:</strong> {f.rule}
                     </p>
-                    <p>
-                      <strong>Elemento:</strong> <code>{f.element}</code>
-                    </p>
-                    {typeof f.occurrences === "number" && f.occurrences > 1 && (
-                      <p>
-                        <strong>Ocorrências:</strong> {f.occurrences} elementos
-                        afetados
-                      </p>
-                    )}
+                    <dl className="report-elements">
+                      <AffectedElements finding={f} />
+                    </dl>
                     <p>
                       <strong>Evidência:</strong> {f.evidence}
                     </p>
@@ -1103,6 +1173,25 @@ export function App() {
                     ? "Análise incompleta; sem resultados disponíveis."
                     : "Nenhum achado automático foi identificado; revisão humana necessária."}
                 </p>
+              )}
+              {review.length > 0 && (
+                <>
+                  <h2>Pontos para conferência manual</h2>
+                  <p>
+                    O axe-core não conseguiu decidir automaticamente estes
+                    pontos; eles não entram no índice.
+                  </p>
+                  <ul className="review-list">
+                    {review.map((f: Finding, i: number) => (
+                      <li key={`report-review-${f.rule}-${i}`}>
+                        <strong>{f.title}</strong> · {f.rule}
+                        {typeof f.occurrences === "number" && f.occurrences > 1
+                          ? ` · ${f.occurrences} elementos`
+                          : ""}
+                      </li>
+                    ))}
+                  </ul>
+                </>
               )}
               <div className="report-manual-header">
                 <div>
@@ -1219,7 +1308,7 @@ export function App() {
                 ],
                 [
                   "Como funciona o gráfico de % de acessibilidade?",
-                  "No Relatório, o gráfico combina 50% da pontuação automática (calculada conforme a quantidade e gravidade dos achados) e 50% da inspeção manual (proporção de critérios aplicáveis marcados como Atende). É um indicador orientativo da avaliação, não uma certificação."
+                  "No Relatório, o gráfico combina 50% da pontuação automática e 50% da inspeção manual (proporção de critérios aplicáveis marcados como Atende). A pontuação automática parte de 100% e desconta cada regra violada conforme a gravidade (Crítico 20, Sério 12, Moderado 7, Leve 4 pontos); regras que falham em muitos elementos pesam mais, até o dobro. Pontos que o axe-core não conseguiu decidir aparecem para conferência manual e não entram no cálculo. É um indicador orientativo da avaliação, não uma certificação."
                 ],
                 [
                   "Como usar o teclado?",
